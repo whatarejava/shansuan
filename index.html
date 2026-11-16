@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>一心闪算 - 珠心算训练</title>
+  <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#FFF8F0;color:#333;min-height:100vh;font-size:14px}
+    .app{padding-bottom:70px}
+    .container{max-width:500px;margin:0 auto;padding:16px}
+    .header{text-align:center;padding:16px 0;margin-bottom:16px}
+    .header h1{font-size:22px;color:#FF6B35}
+    .header p{font-size:12px;color:#999;margin-top:4px}
+    .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .card-title{font-size:15px;font-weight:600;margin-bottom:12px}
+    .btn{padding:12px 20px;border:none;border-radius:8px;font-size:14px;cursor:pointer;transition:all .2s;font-weight:500}
+    .btn-primary{background:linear-gradient(135deg,#FF6B35,#FF8F5E);color:#fff}
+    .btn-primary:active{transform:scale(.98)}
+    .btn-secondary{background:#f5f5f5;color:#666}
+    .btn-block{width:100%;padding:14px}
+    .btn-group{display:flex;gap:8px;flex-wrap:wrap}
+    .btn-item{flex:1;min-width:50px;padding:10px 6px;border:2px solid #eee;border-radius:8px;text-align:center;cursor:pointer;transition:all .2s;font-size:13px;background:#fff}
+    .btn-item.selected{border-color:#FF6B35;background:#FFF5F0;color:#FF6B35}
+    .mode-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .mode-item{padding:20px 12px;border:2px solid #eee;border-radius:12px;text-align:center;cursor:pointer;background:#fff;transition:all .2s}
+    .mode-item.selected{border-color:#FF6B35;background:#FFF5F0}
+    .mode-icon{font-size:32px;margin-bottom:6px}
+    .mode-name{font-size:14px;font-weight:600}
+    .mode-desc{font-size:11px;color:#999;margin-top:2px}
+    .form-group{margin-bottom:16px}
+    .form-label{font-size:13px;color:#666;margin-bottom:8px;display:block}
+    .form-input{width:100%;padding:12px;border:2px solid #eee;border-radius:8px;font-size:14px;outline:none;background:#fff}
+    .form-input:focus{border-color:#FF6B35}
+    select.form-input{appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 12px center;padding-right:32px}
+    .chip-group{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{padding:8px 16px;border:2px solid #eee;border-radius:20px;font-size:13px;cursor:pointer;transition:all .2s;background:#fff}
+    .chip.selected{border-color:#FF6B35;background:#FFF5F0;color:#FF6B35}
+    .number-picker{display:flex;align-items:center;gap:12px}
+    .picker-btn{width:36px;height:36px;border:2px solid #eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;background:#fff;transition:all .2s}
+    .picker-btn:hover{border-color:#FF6B35}
+    .picker-btn.disabled{opacity:.3;cursor:not-allowed}
+    .picker-value{font-size:20px;font-weight:600;min-width:40px;text-align:center}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .digit-select-grid{display:flex;flex-wrap:wrap;gap:8px}
+    .digit-btn{padding:10px;border:2px solid #eee;border-radius:8px;text-align:center;cursor:pointer;font-size:14px;background:#fff}
+    .digit-btn.selected{border-color:#FF6B35;background:#FFF5F0;color:#FF6B35}
+    .progress-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding:0 4px}
+    .stats{display:flex;gap:12px}
+    .stat-correct{color:#4CAF50;font-weight:600}
+    .stat-wrong{color:#F44336;font-weight:600}
+    .question-box{text-align:center;padding:32px 16px;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .question-text{font-size:28px;font-weight:700;color:#333;letter-spacing:2px;word-break:break-all}
+    .broadcast-text{font-size:22px;color:#FF6B35;min-height:32px}
+    .answer-input{width:100%;padding:16px;font-size:24px;text-align:center;border:2px solid #eee;border-radius:12px;outline:none}
+    .answer-input:focus{border-color:#FF6B35}
+    .timer{font-size:22px;font-weight:700;color:#FF6B35;text-align:center;margin-bottom:12px}
+    .timer.warning{color:#F44336;animation:pulse 1s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    .result-score{font-size:56px;font-weight:700;color:#FF6B35;text-align:center;margin:20px 0}
+    .result-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0}
+    .result-item{background:#f9f9f9;padding:14px;border-radius:8px;text-align:center}
+    .result-label{font-size:12px;color:#999}
+    .result-value{font-size:20px;font-weight:600;margin-top:4px}
+    .answer-list{margin-top:16px}
+    .answer-item{padding:12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
+    .answer-q{font-family:monospace;font-size:13px;color:#666}
+    .answer-a{font-size:12px;color:#999;margin-top:2px}
+    .answer-u{font-size:14px;font-weight:600}
+    .correct{color:#4CAF50}
+    .wrong{color:#F44336}
+    .tab-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:flex;justify-content:space-around;padding:8px 0;z-index:100}
+    .tab-item{text-align:center;cursor:pointer;padding:4px 16px}
+    .tab-icon{font-size:22px}
+    .tab-label{font-size:11px;color:#999;margin-top:2px}
+    .tab-item.active .tab-icon{color:#FF6B35}
+    .tab-item.active .tab-label{color:#FF6B35}
+    .train-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .train-item{padding:16px 8px;background:#fff;border-radius:12px;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:transform .2s}
+    .train-item:hover{transform:translateY(-2px)}
+    .train-icon{font-size:28px;margin-bottom:4px}
+    .train-name{font-size:13px;font-weight:500}
+    .empty-state{text-align:center;padding:40px;color:#999}
+    .empty-icon{font-size:48px;margin-bottom:12px}
+    .flex-row{display:flex;gap:12px}
+    .flex-1{flex:1}
+    .mt-12{margin-top:12px}
+    .mt-16{margin-top:16px}
+    .mb-12{margin-bottom:12px}
+    .text-center{text-align:center}
+    .section-title{font-size:16px;font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f0f0f0}
+    .sub-label{font-size:12px;color:#999;margin-bottom:8px;display:block}
+    .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal-box{background:#fff;border-radius:16px;padding:24px;max-width:400px;width:100%;max-height:85vh;overflow-y:auto;position:relative}
+    .modal-close{position:absolute;top:12px;right:16px;font-size:24px;cursor:pointer;color:#999;background:none;border:none}
+    .modal-title{font-size:18px;font-weight:600;text-align:center;margin-bottom:16px}
+    .qr-wrap{text-align:center;padding:16px;background:#f9f9f9;border-radius:12px;margin-bottom:16px}
+    .qr-wrap canvas,.qr-wrap img{max-width:100%!important;height:auto!important}
+    .share-info{background:#FFF8F0;border-radius:8px;padding:12px;font-size:13px;color:#666;margin-bottom:12px;line-height:1.6}
+    .share-info strong{color:#333}
+    .share-actions{display:flex;gap:8px}
+    .share-actions .btn{flex:1}
+    /* 作业列表 */
+    .hw-filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+    .hw-filter-bar label{font-size:12px;color:#666;display:flex;align-items:center;gap:3px;cursor:pointer}
+    .hw-filter-bar input[type=checkbox]{accent-color:#FF6B35;width:14px;height:14px}
+    .hw-date-group{margin-bottom:16px}
+    .hw-date-header{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:2px solid #FF6B35;margin-bottom:8px;cursor:pointer;user-select:none;gap:8px}
+    .hw-date-label{font-size:14px;font-weight:600;color:#333;display:flex;align-items:center}
+    .hw-date-count{font-size:11px;color:#999;background:#f5f5f5;padding:2px 8px;border-radius:10px}
+    .hw-type-badge{font-size:10px;color:#FF6B35;background:#FFF3E0;padding:2px 6px;border-radius:8px;font-weight:500;white-space:nowrap}
+    .hw-expand-icon{display:inline-block;font-size:10px;color:#999;margin-right:6px;transition:transform .2s}
+    .hw-expand-icon.open{transform:rotate(90deg)}
+    .hw-auto-badge{font-size:9px;color:#4CAF50;background:#E8F5E9;padding:1px 5px;border-radius:6px;margin-left:4px;font-weight:500;vertical-align:middle}
+    .hw-header-right{display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+    .hw-type-group-title{font-size:12px;color:#666;padding:6px 0 4px;font-weight:600}
+    .plan-panel{background:#FFF8F0;border:1px solid #FFE0CC;border-radius:8px;padding:10px 12px;margin-bottom:12px}
+    .plan-panel-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+    .plan-panel-title{font-size:13px;font-weight:600;color:#FF6B35}
+    .plan-item{padding:8px 0;border-bottom:1px solid #FFE0CC;display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .plan-item:last-child{border-bottom:none}
+    .plan-info{flex:1;min-width:0}
+    .plan-name{font-size:12px;font-weight:500;color:#333}
+    .plan-meta{font-size:11px;color:#666;margin-top:2px}
+    .plan-actions{display:flex;gap:4px;flex-shrink:0}
+    .plan-disabled-tag{font-size:9px;color:#999;background:#eee;padding:1px 5px;border-radius:6px;margin-left:4px}
+    .schedule-tip{font-size:11px;color:#FF6B35;background:#FFF3E0;padding:8px 10px;border-radius:6px;margin-top:8px;line-height:1.5}
+    .hw-card-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f5f5;cursor:pointer}
+    .hw-card-item:last-child{border-bottom:none}
+    .hw-card-info{flex:1;min-width:0}
+    .hw-card-title{font-size:13px;font-weight:500;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .hw-card-meta{font-size:11px;color:#999;margin-top:2px}
+    .hw-card-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .hw-card-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500;white-space:nowrap}
+    .hw-card-badge.done{background:#E8F5E9;color:#2E7D32}
+    .hw-card-badge.pending{background:#FFF3E0;color:#E65100}
+    .hw-card-badge.expired{background:#FFEBEE;color:#C62828}
+    /* 错题集 */
+    .err-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+    .err-stat-card{background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+    .err-stat-num{font-size:24px;font-weight:700}
+    .err-stat-num.red{color:#F44336}
+    .err-stat-num.green{color:#4CAF50}
+    .err-stat-num.orange{color:#FF9800}
+    .err-stat-num.blue{color:#2196F3}
+    .err-stat-label{font-size:11px;color:#999;margin-top:4px}
+    .err-type-bar{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
+    .err-type-chip{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;background:#f5f5f5;color:#666;cursor:pointer;border:1.5px solid transparent}
+    .err-type-chip.active{background:#FF6B35;color:#fff;border-color:#FF6B35}
+    .err-item{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5}
+    .err-item:last-child{border-bottom:none}
+    .err-item-q{font-family:monospace;font-size:14px;font-weight:600;color:#333;flex:1}
+    .err-item-info{font-size:11px;color:#999;margin-left:8px;text-align:right}
+    .err-item-rate{font-size:12px;font-weight:600;color:#F44336;margin-left:8px}
+    .weak-bar{height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;margin-top:6px}
+    .weak-fill{height:100%;border-radius:4px;transition:width .3s}
+    /* 特殊训练 */
+    .diff-item{display:flex;align-items:center;padding:14px;background:#F8F8F8;border-radius:10px;border:2px solid transparent;margin-bottom:8px;cursor:pointer;gap:12px;transition:all .2s}
+    .diff-item.selected{background:#FFF5F0;border-color:#FF6B35}
+    .diff-icon{font-size:24px}
+    .diff-name{font-size:14px;font-weight:500}
+    .diff-desc{font-size:11px;color:#999}
+    .diff-check{margin-left:auto;font-size:18px;color:#FF6B35;font-weight:700}
+    .abacus-wrap{display:flex;justify-content:center;gap:4px;padding:16px;background:#FFF5F0;border-radius:12px;margin:12px 0;touch-action:none;user-select:none;-webkit-user-select:none}
+    .bead-col{display:flex;flex-direction:column;align-items:center;width:44px}
+    .bead-col .col-label{font-size:16px;font-weight:700;color:#FF6B35;margin-bottom:4px}
+    .bead-upper{display:flex;flex-direction:column;gap:3px;padding:4px 0}
+    .bead-lower{display:flex;flex-direction:column;gap:3px;padding:4px 0}
+    .bead{width:36px;height:16px;border-radius:8px;background:#E0E0E0;cursor:pointer;transition:all .15s;border:2px solid #ccc}
+    .bead.active{background:#FF6B35;border-color:#E55A2B}
+    .bead-divider{width:40px;height:3px;background:#999;border-radius:2px;margin:2px 0}
+    .flash-box{font-size:48px;font-weight:700;color:#FF6B35;text-align:center;padding:40px;letter-spacing:8px;min-height:120px;display:flex;align-items:center;justify-content:center}
+    .flash-box.visible{background:#FFF5F0;border:3px solid #FF6B35;border-radius:16px}
+    .flash-box.hidden{background:#f5f5f5;border-radius:16px;color:#ccc}
+    .flash-hint{text-align:center;font-size:14px;color:#999;margin:8px 0}
+    .numpad{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0}
+    .numpad-btn{width:60px;height:50px;border:2px solid #eee;border-radius:10px;font-size:22px;font-weight:600;cursor:pointer;background:#fff;display:flex;align-items:center;justify-content:center;transition:all .15s}
+    .numpad-btn:active{background:#FFF5F0;border-color:#FF6B35}
+    .numpad-btn.action{font-size:18px;color:#F44336}
+    .flash-input{font-size:32px;font-weight:700;text-align:center;padding:12px;border:2px solid #eee;border-radius:12px;width:100%;letter-spacing:4px;outline:none}
+    .flash-input:focus{border-color:#FF6B35}
+    .feedback-box{text-align:center;padding:20px;border-radius:12px;margin:12px 0}
+    .feedback-box.ok{background:#E8F5E9}
+    .feedback-box.ng{background:#FFEBEE}
+    .feedback-label{font-size:13px;color:#666;margin-top:6px}
+    .feedback-val{font-weight:700;font-size:16px}
+    /* 定级考试 */
+    .exam-sys-tabs{display:flex;gap:8px;margin-bottom:12px}
+    .exam-sys-tab{flex:1;padding:14px 8px;border:2px solid #eee;border-radius:12px;text-align:center;cursor:pointer;background:#fff;transition:all .2s}
+    .exam-sys-tab.selected{border-color:#FF6B35;background:#FFF5F0}
+    .exam-sys-tab .icon{font-size:24px;display:block;margin-bottom:4px}
+    .exam-sys-tab .name{font-size:13px;font-weight:600}
+    .exam-sys-tab .desc{font-size:10px;color:#999;margin-top:2px}
+    .exam-level-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .exam-level-card{position:relative;padding:14px;border:2px solid #eee;border-radius:12px;text-align:center;cursor:pointer;background:#fff;transition:all .2s}
+    .exam-level-card.selected{border-color:#FF6B35;background:#FFF5F0}
+    .exam-level-card.locked{opacity:.5;cursor:not-allowed}
+    .exam-level-badge{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#FFA726);color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+    .exam-level-name{font-size:13px;font-weight:600;display:block}
+    .exam-level-desc{font-size:10px;color:#999;display:block;margin:4px 0 8px}
+    .exam-level-stats{display:flex;justify-content:space-around;border-top:1px solid #f0f0f0;padding-top:8px;font-size:10px;color:#999}
+    .exam-level-stats span{color:#FF6B35;font-weight:600}
+    .exam-lock-overlay{position:absolute;inset:0;background:rgba(0,0,0,.3);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600}
+    .exam-pass-badge{position:absolute;top:8px;right:8px;background:#4CAF50;color:#fff;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:500}
+    .exam-info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13px}
+    .exam-info-row:last-child{border-bottom:none}
+    .exam-subject-tag{background:#FFF5F0;color:#FF6B35;padding:3px 10px;border-radius:6px;font-size:11px;display:inline-block;margin:2px}
+    .exam-top-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);border-radius:12px;margin-bottom:12px}
+    .exam-timer{font-size:20px;font-weight:700;color:#333}
+    .exam-timer.warn{color:#F44336;animation:pulse 1s infinite}
+    .exam-question-text{font-size:32px;font-weight:700;color:#333;letter-spacing:3px;margin-bottom:8px;text-align:center}
+    .exam-question-type{font-size:11px;color:#999;margin-bottom:24px;text-align:center}
+    .exam-answer-display{font-size:28px;font-weight:600;color:#FF6B35;min-height:40px;padding:8px 20px;border:2px solid #eee;border-radius:12px;min-width:200px;text-align:center;background:#fff}
+    .exam-answer-display.empty{color:#ccc}
+    .exam-numpad{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0}
+    .exam-numpad-btn{width:64px;height:52px;border:1.5px solid #ddd;border-radius:10px;font-size:22px;font-weight:600;cursor:pointer;background:#fff;display:flex;align-items:center;justify-content:center;transition:all .12s}
+    .exam-numpad-btn:active{background:#FFF5F0;border-color:#FF6B35;transform:scale(.95)}
+    .exam-numpad-btn.del{color:#F44336;font-size:18px}
+    .exam-numpad-btn.submit{background:linear-gradient(135deg,#FF6B35,#FF8F5E);color:#fff;border-color:transparent;font-size:15px;font-weight:500}
+    .exam-progress-track{height:6px;background:#eee;border-radius:3px;margin:8px 0 16px;overflow:hidden}
+    .exam-progress-fill{height:100%;background:linear-gradient(90deg,#FF6B35,#FFA726);border-radius:3px;transition:width .3s}
+    .exam-result-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+    .exam-result-box{background:#fff;border-radius:16px;padding:28px;max-width:380px;width:100%;text-align:center}
+    .exam-cert-page{position:fixed;inset:0;background:linear-gradient(180deg,#FFF8E1,#FFECB3);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+    .exam-cert-canvas{border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);max-width:100%}
+    .exam-cert-actions{display:flex;gap:10px;margin-top:20px}
+    .exam-cert-actions .btn{padding:12px 24px;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:500}
+    .exam-hist-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f5f5f5}
+    .exam-hist-item:last-child{border-bottom:none}
+    .exam-result-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+    .exam-result-box{background:#fff;border-radius:16px;padding:28px;max-width:380px;width:100%;text-align:center;max-height:85vh;overflow-y:auto}
+  </style>
+</head>
+<body>
+<div id="app" class="app">
+
+<!-- ========== 首页 ========== -->
+<div v-if="page==='home'" class="container">
+  <div class="header"><h1>🧮 一心闪算</h1><p>珠心算专项训练</p></div>
+  <div class="card" style="cursor:pointer" @click="page='homeworkList'">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:24px">📝</div>
+        <div><div style="font-size:15px;font-weight:600;color:#333">我的作业</div><div style="font-size:11px;color:#999;margin-top:2px">查看和完成布置的作业</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span v-if="pendingHWCount" style="background:#FF6B35;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">{{pendingHWCount}}</span>
+        <span style="color:#ccc;font-size:18px">›</span>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="cursor:pointer" @click="page='createHW'">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:24px">✏️</div>
+        <div><div style="font-size:15px;font-weight:600;color:#333">布置作业</div><div style="font-size:11px;color:#999;margin-top:2px">创建作业或自动出题计划</div></div>
+      </div>
+      <span style="color:#ccc;font-size:18px">›</span>
+    </div>
+  </div>
+  <div class="card" style="cursor:pointer" @click="page='trainSelect'">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:24px">🎯</div>
+        <div><div style="font-size:15px;font-weight:600;color:#333">自由训练</div><div style="font-size:11px;color:#999;margin-top:2px">加减乘除 · 听心算 · 专项训练</div></div>
+      </div>
+      <span style="color:#ccc;font-size:18px">›</span>
+    </div>
+  </div>
+  <div class="card" style="cursor:pointer" @click="openExam()">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:24px">🎓</div>
+        <div><div style="font-size:15px;font-weight:600;color:#333">定级考试</div><div style="font-size:11px;color:#999;margin-top:2px">测试珠心算等级</div></div>
+      </div>
+      <span style="color:#ccc;font-size:18px">›</span>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 训练类型选择 ========== -->
+<div v-if="page==='trainSelect'" class="container">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn btn-secondary" style="padding:6px 10px;font-size:14px" @click="page='home'">←</button>
+      <div style="flex:1"><h1 style="font-size:18px;margin:0">🎯 自由训练</h1><p style="color:#FF6B35;font-size:12px;margin-top:2px">选择训练类型</p></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">基础运算</div>
+    <div class="train-list">
+      <div class="train-item" @click="freeTrain('addition')"><div class="train-icon">➕</div><div class="train-name">加法</div></div>
+      <div class="train-item" @click="freeTrain('subtraction')"><div class="train-icon">➖</div><div class="train-name">减法</div></div>
+      <div class="train-item" @click="freeTrain('multiply')"><div class="train-icon">✖️</div><div class="train-name">乘法</div></div>
+      <div class="train-item" @click="freeTrain('divide')"><div class="train-icon">➗</div><div class="train-name">除法</div></div>
+      <div class="train-item" @click="freeTrain('addSub')"><div class="train-icon">🔀</div><div class="train-name">加减混合</div></div>
+      <div class="train-item" @click="freeTrain('listening')"><div class="train-icon">🎧</div><div class="train-name">听心算</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">专项训练</div>
+    <div class="train-list">
+      <div class="train-item" @click="startSpecial('numToBead')"><div class="train-icon">📿</div><div class="train-name">看数画珠</div></div>
+      <div class="train-item" @click="startSpecial('beadToNum')"><div class="train-icon">🔢</div><div class="train-name">看珠译数</div></div>
+      <div class="train-item" @click="startSpecial('flashMemory')"><div class="train-icon">⚡</div><div class="train-name">数码秒记</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 布置作业 ========== -->
+<div v-if="page==='createHW'" class="container">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn btn-secondary" style="padding:6px 10px;font-size:14px" @click="page='home'">←</button>
+      <div style="flex:1"><h1 style="font-size:18px;margin:0">✏️ 布置作业</h1><p style="color:#FF6B35;font-size:12px;margin-top:2px">{{autoTitle}}</p></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="form-group">
+      <label class="form-label">训练类型</label>
+      <select class="form-input" v-model="hw.type" @change="onHWTypeChange">
+        <option v-for="t in hwTypes" :key="t.value" :value="t.value">{{t.label}}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">训练模式</label>
+      <div class="mode-grid">
+        <div class="mode-item" :class="{selected:hw.config.mode==='visual'}" @click="hw.config.mode='visual'">
+          <div class="mode-icon">👀</div><div class="mode-name">看心算</div>
+        </div>
+        <div class="mode-item" :class="{selected:hw.config.mode==='listening'}" @click="hw.config.mode='listening'">
+          <div class="mode-icon">🎧</div><div class="mode-name">听心算</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-if="isAddSubType" class="card">
+    <div class="section-title">{{currentTypeLabel}} 配置</div>
+    <div v-if="hw.type==='addition'" class="chip-group" style="margin-bottom:12px">
+      <div class="chip" :class="{selected:hw.opType==='direct_add'}" @click="hw.opType='direct_add'">直加</div>
+      <div class="chip" :class="{selected:hw.opType==='carry_add'}" @click="hw.opType='carry_add'">进位加</div>
+    </div>
+    <div v-if="hw.type==='subtraction'" class="chip-group" style="margin-bottom:12px">
+      <div class="chip" :class="{selected:hw.opType==='direct_sub'}" @click="hw.opType='direct_sub'">直减</div>
+      <div class="chip" :class="{selected:hw.opType==='borrow_sub'}" @click="hw.opType='borrow_sub'">退位减</div>
+    </div>
+    <div v-if="hw.type==='addSub'" class="chip-group" style="margin-bottom:12px">
+      <div class="chip" :class="{selected:hw.opType==='direct_add'}" @click="hw.opType='direct_add'">直加直减</div>
+      <div class="chip" :class="{selected:hw.opType==='carry_add'}" @click="hw.opType='carry_add'">进位加退位减</div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="sub-label">整数位</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.minDigit">
+            <option v-for="n in 4" :key="n" :value="n">{{n}}</option>
+          </select>
+          <span style="color:#999">~</span>
+          <select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.maxDigit">
+            <option v-for="n in digitOptions" :key="n" :value="n" :disabled="n<hw.minDigit">{{n}}</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="sub-label">小数位</label>
+        <select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.decDigit">
+          <option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div v-if="hw.type==='multiply'" class="card">
+    <div class="section-title">乘法配置</div>
+    <div class="form-row">
+      <div>
+        <label class="sub-label">被乘数 整数位</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.minDigit"><option v-for="n in 4" :key="n" :value="n">{{n}}</option></select>
+          <span style="color:#999">~</span>
+          <select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.maxDigit"><option v-for="n in digitOptions" :key="n" :value="n" :disabled="n<hw.minDigit">{{n}}</option></select>
+        </div>
+      </div>
+      <div>
+        <label class="sub-label">被乘数 小数位</label>
+        <select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.decDigit"><option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="sub-label">乘数 整数位</label>
+        <select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.mulMaxDigit"><option v-for="n in 4" :key="n" :value="n">{{n}}</option></select>
+      </div>
+      <div>
+        <label class="sub-label">乘数 小数位</label>
+        <select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.mulDecDigit" :disabled="hw.mulMaxDigit===1"><option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option></select>
+      </div>
+    </div>
+    <div v-if="hw.mulMaxDigit===1 && hw.mulDecDigit===0" class="form-group">
+      <label class="sub-label">可选数字（可不选，随机2-9）</label>
+      <div class="digit-select-grid"><div v-for="num in [2,3,4,5,6,7,8,9]" :key="num" class="digit-btn" :class="{selected:hw.allowedDigits.includes(num)}" @click="toggleAllowed(num)">{{num}}</div></div>
+    </div>
+  </div>
+  <div v-if="hw.type==='divide'" class="card">
+    <div class="section-title">除法配置</div>
+    <div class="form-row">
+      <div>
+        <label class="sub-label">被除数 整数位</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.minDigit"><option v-for="n in 4" :key="n" :value="n">{{n}}</option></select>
+          <span style="color:#999">~</span>
+          <select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.maxDigit"><option v-for="n in digitOptions" :key="n" :value="n" :disabled="n<hw.minDigit">{{n}}</option></select>
+        </div>
+      </div>
+      <div>
+        <label class="sub-label">被除数 小数位</label>
+        <select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.decDigit"><option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="sub-label">除数 整数位</label>
+        <select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.mulMaxDigit"><option v-for="n in 4" :key="n" :value="n">{{n}}</option></select>
+      </div>
+      <div>
+        <label class="sub-label">除数 小数位</label>
+        <select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.mulDecDigit" :disabled="hw.mulMaxDigit===1"><option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option></select>
+      </div>
+    </div>
+    <div v-if="hw.mulMaxDigit===1 && hw.mulDecDigit===0" class="form-group">
+      <label class="sub-label">可选数字（可不选，随机2-9）</label>
+      <div class="digit-select-grid"><div v-for="num in [2,3,4,5,6,7,8,9]" :key="num" class="digit-btn" :class="{selected:hw.allowedDigits.includes(num)}" @click="toggleAllowed(num)">{{num}}</div></div>
+    </div>
+    <div class="form-row">
+      <div><label class="sub-label">商 小数位</label><select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.ansDecDigit"><option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option></select></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">通用配置</div>
+    <div class="form-group">
+      <label class="sub-label">笔数（{{numCountMin}}-{{numCountMax}}）</label>
+      <div class="number-picker">
+        <div class="picker-btn" :class="{disabled:hw.numCount<=numCountMin}" @click="hw.numCount=Math.max(numCountMin,hw.numCount-1)">-</div>
+        <div class="picker-value">{{hw.numCount}}</div>
+        <div class="picker-btn" :class="{disabled:hw.numCount>=numCountMax}" @click="hw.numCount=Math.min(numCountMax,hw.numCount+1)">+</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="sub-label">题目数量</label>
+      <div class="btn-group">
+        <div v-for="n in [5,10,15,20,30]" :key="n" class="btn-item" :class="{selected:hw.config.questionCount===n}" @click="hw.config.questionCount=n">{{n}}题</div>
+      </div>
+    </div>
+    <div v-if="hw.config.mode==='listening'" class="form-group">
+      <label class="sub-label">播报语速</label>
+      <select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.config.speed">
+        <option v-for="s in speedOpts" :key="s.v" :value="s.v">{{s.l}}</option>
+      </select>
+    </div>
+    <div v-if="hw.config.mode==='listening'" class="form-group">
+      <label class="sub-label">读数间隔（秒）</label>
+      <div class="number-picker">
+        <div class="picker-btn" @click="hw.config.interval=Math.round(Math.max(0.3,hw.config.interval-0.1)*10)/10">-</div>
+        <div class="picker-value">{{hw.config.interval.toFixed(1)}}s</div>
+        <div class="picker-btn" @click="hw.config.interval=Math.round(Math.min(2,hw.config.interval+0.1)*10)/10">+</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">发布方式</div>
+    <div class="chip-group">
+      <div class="chip" :class="{selected:hw.publishMode==='immediate'}" @click="hw.publishMode='immediate'">立即发布</div>
+      <div class="chip" :class="{selected:hw.publishMode==='scheduled'}" @click="hw.publishMode='scheduled'">📅 定时自动发布</div>
+    </div>
+    <div v-if="hw.publishMode==='scheduled'" style="margin-top:12px">
+      <div class="form-row">
+        <div>
+          <label class="sub-label">开始日期</label>
+          <input type="date" class="form-input" v-model="hw.scheduleStartDate">
+        </div>
+        <div>
+          <label class="sub-label">截止日期</label>
+          <input type="date" class="form-input" v-model="hw.scheduleEndDate">
+        </div>
+      </div>
+      <div class="schedule-tip">💡 有效期内每天早上 <strong>07:00</strong> 自动生成一道“{{currentTypeLabel}}{{hw.config.mode==='listening'?'听心算':'看心算'}}”作业，使用以上配置。</div>
+    </div>
+  </div>
+  <div class="flex-row mt-16">
+    <button class="btn btn-secondary flex-1" @click="page='home'">返回</button>
+    <button class="btn btn-primary flex-1" @click="submitHW">{{hw.publishMode==='scheduled'?'创建自动出题计划':'保存作业'}}</button>
+  </div>
+</div>
+
+<!-- ========== 训练配置 ========== -->
+<div v-if="page==='configTrain'" class="container">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn btn-secondary" style="padding:6px 10px;font-size:14px" @click="page='home'">←</button>
+      <div style="flex:1"><h1 style="font-size:18px;margin:0">🎯 自由训练</h1><p style="color:#FF6B35;font-size:12px;margin-top:2px">{{hwTypes.find(t=>t.value===hw.type)?.label||''}} 配置</p></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="form-group">
+      <label class="form-label">训练类型</label>
+      <select class="form-input" v-model="hw.type" @change="onTrainTypeChange">
+        <option v-for="t in hwTypes" :key="t.value" :value="t.value">{{t.label}}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">训练模式</label>
+      <div class="mode-grid">
+        <div class="mode-item" :class="{selected:hw.config.mode==='visual'}" @click="hw.config.mode='visual'"><div class="mode-icon">👀</div><div class="mode-name">看心算</div></div>
+        <div class="mode-item" :class="{selected:hw.config.mode==='listening'}" @click="hw.config.mode='listening'"><div class="mode-icon">🎧</div><div class="mode-name">听心算</div></div>
+      </div>
+    </div>
+  </div>
+  <div v-if="isAddSubType" class="card">
+    <div class="section-title">{{currentTypeLabel}} 配置</div>
+    <div v-if="hw.type==='addition'" class="chip-group" style="margin-bottom:12px">
+      <div class="chip" :class="{selected:hw.opType==='direct_add'}" @click="hw.opType='direct_add'">直加</div>
+      <div class="chip" :class="{selected:hw.opType==='carry_add'}" @click="hw.opType='carry_add'">进位加</div>
+    </div>
+    <div v-if="hw.type==='subtraction'" class="chip-group" style="margin-bottom:12px">
+      <div class="chip" :class="{selected:hw.opType==='direct_sub'}" @click="hw.opType='direct_sub'">直减</div>
+      <div class="chip" :class="{selected:hw.opType==='borrow_sub'}" @click="hw.opType='borrow_sub'">退位减</div>
+    </div>
+    <div v-if="hw.type==='addSub'" class="chip-group" style="margin-bottom:12px">
+      <div class="chip" :class="{selected:hw.opType==='direct_add'}" @click="hw.opType='direct_add'">直加直减</div>
+      <div class="chip" :class="{selected:hw.opType==='carry_add'}" @click="hw.opType='carry_add'">进位加退位减</div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="sub-label">整数位</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.minDigit"><option v-for="n in 4" :key="n" :value="n">{{n}}</option></select>
+          <span style="color:#999">~</span>
+          <select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.maxDigit"><option v-for="n in digitOptions" :key="n" :value="n" :disabled="n<hw.minDigit">{{n}}</option></select>
+        </div>
+      </div>
+      <div>
+        <label class="sub-label">小数位</label>
+        <select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.decDigit"><option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option></select>
+      </div>
+    </div>
+  </div>
+  <div v-if="hw.type==='multiply'" class="card">
+    <div class="section-title">乘法配置</div>
+    <div class="form-row">
+      <div><label class="sub-label">被乘数 整数位</label><div style="display:flex;align-items:center;gap:6px"><select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.minDigit"><option v-for="n in 4" :key="n" :value="n">{{n}}</option></select><span style="color:#999">~</span><select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.maxDigit"><option v-for="n in digitOptions" :key="n" :value="n" :disabled="n<hw.minDigit">{{n}}</option></select></div></div>
+      <div><label class="sub-label">被乘数 小数位</label><select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.decDigit"><option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option></select></div>
+    </div>
+    <div class="form-row">
+      <div><label class="sub-label">乘数 整数位</label><select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.mulMaxDigit"><option v-for="n in 4" :key="n" :value="n">{{n}}</option></select></div>
+      <div><label class="sub-label">乘数 小数位</label><select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.mulDecDigit" :disabled="hw.mulMaxDigit===1"><option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option></select></div>
+    </div>
+    <div v-if="hw.mulMaxDigit===1 && hw.mulDecDigit===0" class="form-group"><label class="sub-label">可选数字</label><div class="digit-select-grid"><div v-for="num in [2,3,4,5,6,7,8,9]" :key="num" class="digit-btn" :class="{selected:hw.allowedDigits.includes(num)}" @click="toggleAllowed(num)">{{num}}</div></div></div>
+  </div>
+  <div v-if="hw.type==='divide'" class="card">
+    <div class="section-title">除法配置</div>
+    <div class="form-row">
+      <div><label class="sub-label">被除数 整数位</label><div style="display:flex;align-items:center;gap:6px"><select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.minDigit"><option v-for="n in 4" :key="n" :value="n">{{n}}</option></select><span style="color:#999">~</span><select class="form-input" style="width:60px;padding:8px 4px" v-model.number="hw.maxDigit"><option v-for="n in digitOptions" :key="n" :value="n" :disabled="n<hw.minDigit">{{n}}</option></select></div></div>
+      <div><label class="sub-label">被除数 小数位</label><select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.decDigit"><option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option></select></div>
+    </div>
+    <div class="form-row">
+      <div><label class="sub-label">除数 整数位</label><select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.mulMaxDigit"><option v-for="n in 4" :key="n" :value="n">{{n}}</option></select></div>
+      <div><label class="sub-label">除数 小数位</label><select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.mulDecDigit" :disabled="hw.mulMaxDigit===1"><option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option></select></div>
+    </div>
+    <div v-if="hw.mulMaxDigit===1 && hw.mulDecDigit===0" class="form-group"><label class="sub-label">可选数字</label><div class="digit-select-grid"><div v-for="num in [2,3,4,5,6,7,8,9]" :key="num" class="digit-btn" :class="{selected:hw.allowedDigits.includes(num)}" @click="toggleAllowed(num)">{{num}}</div></div></div>
+    <div class="form-row">
+      <div><label class="sub-label">商 小数位</label><select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.ansDecDigit"><option v-for="n in 5" :key="n-1" :value="n-1">{{n-1}}</option></select></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">通用配置</div>
+    <div class="form-group">
+      <label class="sub-label">笔数（{{trainNumCountMin}}-{{trainNumCountMax}}）</label>
+      <div class="number-picker">
+        <div class="picker-btn" :class="{disabled:hw.numCount<=trainNumCountMin}" @click="hw.numCount=Math.max(trainNumCountMin,hw.numCount-1)">-</div>
+        <div class="picker-value">{{hw.numCount}}</div>
+        <div class="picker-btn" :class="{disabled:hw.numCount>=trainNumCountMax}" @click="hw.numCount=Math.min(trainNumCountMax,hw.numCount+1)">+</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="sub-label">题目数量</label>
+      <div class="btn-group"><div v-for="n in [5,10,15,20,30]" :key="n" class="btn-item" :class="{selected:hw.config.questionCount===n}" @click="hw.config.questionCount=n">{{n}}题</div></div>
+    </div>
+    <div v-if="hw.config.mode==='listening'" class="form-group">
+      <label class="sub-label">播报语速</label>
+      <select class="form-input" style="width:80px;padding:8px 4px" v-model.number="hw.config.speed"><option v-for="s in speedOpts" :key="s.v" :value="s.v">{{s.l}}</option></select>
+    </div>
+    <div v-if="hw.config.mode==='listening'" class="form-group">
+      <label class="sub-label">读数间隔（秒）</label>
+      <div class="number-picker">
+        <div class="picker-btn" @click="hw.config.interval=Math.round(Math.max(0.3,hw.config.interval-0.1)*10)/10">-</div>
+        <div class="picker-value">{{hw.config.interval.toFixed(1)}}s</div>
+        <div class="picker-btn" @click="hw.config.interval=Math.round(Math.min(2,hw.config.interval+0.1)*10)/10">+</div>
+      </div>
+    </div>
+  </div>
+  <div class="flex-row mt-16">
+    <button class="btn btn-secondary flex-1" @click="page='home'">返回首页</button>
+    <button class="btn btn-primary flex-1" @click="goTrain">开始训练</button>
+  </div>
+</div>
+
+<!-- ========== 训练中 ========== -->
+<div v-if="page==='train'" class="container">
+  <div class="progress-bar">
+    <div>第 {{train.idx+1}} / {{train.total}} 题</div>
+    <div class="stats"><span class="stat-correct">✓{{train.ok}}</span><span class="stat-wrong">✗{{train.err}}</span></div>
+  </div>
+  <div class="card">
+    <div v-if="train.showTimer" class="timer" :class="{warning:train.time<=5}">{{train.time}}s</div>
+    <div class="question-box">
+      <div v-if="train.mode==='visual'" class="question-text">{{train.display}}</div>
+      <div v-else class="broadcast-text">{{train.canAns ? '请输入答案' : '🔊 正在播报，请仔细听...'}}</div>
+    </div>
+    <input ref="ansInput" type="number" class="answer-input" v-model="train.input" placeholder="输入答案" @keyup.enter="submitAns" :disabled="!train.canAns">
+  </div>
+  <button v-if="train.canAns" class="btn btn-primary btn-block mt-12" @click="submitAns">提交答案</button>
+  <button v-else class="btn btn-primary btn-block mt-12" disabled style="opacity:.5">{{train.mode==='listening'?'播报中...':'请答题'}}</button>
+  <div class="text-center mt-12"><button class="btn btn-secondary" @click="exitTrain">退出训练</button></div>
+</div>
+
+<!-- ========== 结果 ========== -->
+<div v-if="page==='result'" class="container">
+  <div class="header"><h1>🎉 训练完成！</h1></div>
+  <div class="card">
+    <div class="result-score">{{train.accuracy}}%</div>
+    <div class="text-center" style="color:#999;font-size:14px">正确率</div>
+    <div class="result-grid">
+      <div class="result-item"><div class="result-label">正确</div><div class="result-value correct">{{train.ok}}</div></div>
+      <div class="result-item"><div class="result-label">错误</div><div class="result-value wrong">{{train.err}}</div></div>
+      <div class="result-item"><div class="result-label">总题数</div><div class="result-value">{{train.total}}</div></div>
+      <div class="result-item"><div class="result-label">用时</div><div class="result-value">{{train.usedTime}}s</div></div>
+    </div>
+  </div>
+  <div class="card answer-list">
+    <div class="card-title">答题详情</div>
+    <div v-for="(a,i) in train.answers" :key="i" class="answer-item">
+      <div><div class="answer-q">{{fmtQ(a.q)}}</div><div class="answer-a">正确: {{a.ans}}</div></div>
+      <div class="answer-u" :class="a.ok?'correct':'wrong'">{{a.user}} {{a.ok?'✓':'✗'}}</div>
+    </div>
+  </div>
+  <div class="flex-row mt-16">
+    <button class="btn btn-secondary flex-1" @click="page='home'">返回首页</button>
+    <button class="btn btn-primary flex-1" @click="shareResult">📤 分享成绩</button>
+  </div>
+  <div class="flex-row mt-12">
+    <button class="btn btn-primary flex-1" @click="startTrain">再来一次</button>
+  </div>
+</div>
+
+<!-- ========== 作业列表 ========== -->
+<div v-if="page==='homeworkList'" class="container">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn btn-secondary" style="padding:6px 10px;font-size:14px" @click="page='home'">←</button>
+      <div style="flex:1"><h1 style="font-size:18px;margin:0">📝 我的作业</h1></div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div class="plan-panel" style="flex:1;margin-bottom:0">
+      <div class="plan-panel-header" @click="showPlans=!showPlans">
+        <div class="plan-panel-title">📅 自动出题计划（{{hwPlans.length}}）</div>
+        <span class="hw-expand-icon" :class="{open:showPlans}">▶</span>
+      </div>
+      <div v-if="showPlans" style="margin-top:6px">
+        <div v-if="!hwPlans.length" style="font-size:11px;color:#999;padding:8px 0">暂无自动出题计划，去“布置作业”页面创建 →</div>
+        <div v-for="p in hwPlans" :key="p.id" class="plan-item">
+          <div class="plan-info">
+            <div class="plan-name">{{p.name}}<span v-if="!p.enabled" class="plan-disabled-tag">已停用</span></div>
+            <div class="plan-meta">📆 {{p.startDate}} ~ {{p.endDate}} · 每日 07:00 · {{p.config.questionCount}}题</div>
+          </div>
+          <div class="plan-actions">
+            <button class="btn btn-secondary" style="padding:3px 8px;font-size:10px" @click="toggleHWPlan(p.id)">{{p.enabled?'停用':'启用'}}</button>
+            <button class="btn btn-secondary" style="padding:3px 8px;font-size:10px;color:#F44336" @click="deleteHWPlan(p.id)">删除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-secondary" style="padding:6px 10px;font-size:11px;margin-left:8px;flex-shrink:0" @click="clearHomeworks">🗑️ 清除作业</button>
+  </div>
+  <div class="hw-filter-bar">
+    <label><input type="checkbox" v-model="hwShowPending">待完成</label>
+    <label><input type="checkbox" v-model="hwShowDone">已完成</label>
+    <label><input type="checkbox" v-model="hwShowExpired">已截止</label>
+  </div>
+  <div v-if="!groupedHWs.length" class="empty-state"><div class="empty-icon">📭</div><div>暂无作业</div></div>
+  <div v-for="group in groupedHWs" :key="group.date" class="hw-date-group">
+    <div class="hw-date-header" @click="toggleDate(group.date)">
+      <div class="hw-date-label">
+        <span class="hw-expand-icon" :class="{open:group.expanded}">▶</span>
+        📅 {{group.date}}
+      </div>
+      <div class="hw-header-right">
+        <span v-for="tg in group.typeGroups" :key="tg.type" class="hw-type-badge">{{tg.typeLabel}} {{tg.items.length}}</span>
+        <span class="hw-date-count">共{{group.items.length}}个</span>
+      </div>
+    </div>
+    <div v-if="group.expanded">
+      <div v-for="tg in group.typeGroups" :key="tg.type" style="margin-bottom:6px">
+        <div class="hw-type-group-title">【{{tg.typeLabel}}】{{tg.items.length}}个作业</div>
+        <div v-for="h in tg.items" :key="h.id" class="hw-card-item" @click="getHWStatus(h)==='pending'&&doHomework(h)" :style="getHWStatus(h)==='expired'?'opacity:0.5;pointer-events:none':''">
+          <div class="hw-card-info">
+            <div class="hw-card-title">{{h.title}}<span v-if="h.isAuto" class="hw-auto-badge">自动</span></div>
+            <div class="hw-card-meta">{{h.config.mode==='listening'?'听心算':'看心算'}} · {{h.config.questionCount}}题</div>
+          </div>
+          <div class="hw-card-right">
+            <span class="hw-card-badge" :class="getHWStatus(h)">{{getHWStatusText(h)}}</span>
+            <button class="btn btn-secondary" style="padding:3px 8px;font-size:10px" @click.stop="deleteHW(h.id)">删除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 错题集 ========== -->
+<div v-if="page==='errorBook'" class="container">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn btn-secondary" style="padding:6px 10px;font-size:14px" @click="page='home'">←</button>
+      <div style="flex:1"><h1 style="font-size:18px;margin:0">📕 错题集</h1></div>
+    </div>
+  </div>
+  <div class="err-stat-grid">
+    <div class="err-stat-card"><div class="err-stat-num orange">{{errorStats.totalQ}}</div><div class="err-stat-label">总做题数</div></div>
+    <div class="err-stat-card"><div class="err-stat-num red">{{errorStats.totalErr}}</div><div class="err-stat-label">错题数</div></div>
+    <div class="err-stat-card"><div class="err-stat-num green">{{errorStats.accuracy}}%</div><div class="err-stat-label">总正确率</div></div>
+    <div class="err-stat-card"><div class="err-stat-num blue">{{errorStats.weakType||'无'}}</div><div class="err-stat-label">薄弱运算</div></div>
+  </div>
+  <div v-if="errorStats.byType.length" class="card">
+    <div class="card-title">薄弱点分析</div>
+    <div v-for="t in errorStats.byType" :key="t.type" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:13px">
+        <span>{{t.label}}</span>
+        <span :style="{color:t.errRate>30?'#F44336':t.errRate>15?'#FF9800':'#4CAF50',fontWeight:600}">{{t.errRate}}% 错误率 ({{t.err}}/{{t.total}})</span>
+      </div>
+      <div class="weak-bar"><div class="weak-fill" :style="{width:t.errRate+'%',background:t.errRate>30?'#F44336':t.errRate>15?'#FF9800':'#4CAF50'}"></div></div>
+    </div>
+  </div>
+  <div v-if="topErrors.length" class="card">
+    <div class="card-title">高频错题 Top {{topErrors.length}}</div>
+    <div v-for="e in topErrors" :key="e.key" class="err-item">
+      <div class="err-item-q">{{e.display}}</div>
+      <div class="err-item-info">错{{e.count}}次 / 共{{e.total}}次</div>
+      <button class="btn btn-primary" style="padding:4px 12px;font-size:11px;margin-left:8px" @click="retryErrors(e.type)">重练</button>
+    </div>
+  </div>
+  <div v-if="!errorStats.totalQ" class="empty-state"><div class="empty-icon">📕</div><div>暂无错题记录</div><div style="font-size:12px;color:#999;margin-top:8px">完成作业或训练后自动记录</div></div>
+</div>
+
+<!-- ========== 分享弹窗 ========== -->
+<div v-if="showShareModal" class="modal-overlay" @click.self="showShareModal=false">
+  <div class="modal-box">
+    <button class="modal-close" @click="showShareModal=false">&times;</button>
+    <div class="modal-title">{{shareModalTitle}}</div>
+    <div class="qr-wrap" ref="qrContainer"></div>
+    <div class="share-info" v-html="shareText"></div>
+    <div class="share-actions">
+      <button class="btn btn-primary" @click="copyShareText">💾 保存分享卡片</button>
+    </div>
+    <div v-if="copyTip" style="text-align:center;color:#4CAF50;font-size:13px;margin-top:8px">✅ 已保存</div>
+  </div>
+</div>
+
+<!-- ========== 特殊训练配置（看数画珠/看珠译数/数码秒记） ========== -->
+<div v-if="page==='specialCfg'" class="container">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn btn-secondary" style="padding:6px 10px;font-size:14px" @click="page='home'">←</button>
+      <div style="flex:1"><h1 style="font-size:18px;margin:0">{{specialLabel}} 配置</h1></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">选择难度</div>
+    <div v-for="d in specialDiffs" :key="d.value" class="diff-item" :class="{selected:spCfg.difficulty===d.value}" @click="spCfg.difficulty=d.value">
+      <div class="diff-icon">{{d.icon}}</div>
+      <div><div class="diff-name">{{d.label}}</div><div class="diff-desc">{{d.desc}}</div></div>
+      <div class="diff-check">{{spCfg.difficulty===d.value?'✓':''}}</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">题目数量</div>
+    <div class="btn-group">
+      <div v-for="n in [10,15,20,30]" :key="n" class="btn-item" :class="{selected:spCfg.count===n}" @click="spCfg.count=n">{{n}}题</div>
+    </div>
+  </div>
+  <div class="flex-row mt-16">
+    <button class="btn btn-secondary flex-1" @click="page='home'">返回</button>
+    <button class="btn btn-primary flex-1" @click="goSpecial">🚀 开始训练</button>
+  </div>
+</div>
+
+<!-- ========== 看数画珠训练 ========== -->
+<div v-if="page==='spTrain'&&spCfg.type==='numToBead'" class="container">
+  <div class="progress-bar">
+    <div>第 {{sp.idx+1}} / {{spCfg.count}} 题</div>
+    <div class="stats"><span class="stat-correct">✓{{sp.ok}}</span><span class="stat-wrong">✗{{sp.err}}</span></div>
+  </div>
+  <div class="card">
+    <div v-if="sp.phase==='show'" class="text-center">
+      <div class="flash-hint">👀 记住这个数字的珠像</div>
+      <div class="flash-box visible">{{sp.number}}</div>
+      <div class="flash-hint" style="color:#FF6B35;font-weight:600">{{sp.countdown}}s</div>
+    </div>
+    <div v-if="sp.phase==='verify'" class="text-center">
+      <div class="flash-hint">拨动算珠还原珠像：</div>
+      <div class="abacus-wrap" id="spAbacus">
+        <div v-for="(col,i) in sp.beads" :key="i" class="bead-col">
+          <div class="bead-upper" @click="spClickBead(i,'upper')"><div v-for="j in 2" :key="'u'+j" class="bead" :class="{active:j>(2-col.upper)}"></div></div>
+          <div class="bead-divider"></div>
+          <div class="bead-lower" @click="spClickBead(i,'lower')"><div v-for="j in 4" :key="'l'+j" class="bead" :class="{active:j<=col.lower}"></div></div>
+        </div>
+      </div>
+      <div class="flash-hint">当前：{{beadsToNum(sp.beads)}} <span v-if="beadsToNum(sp.beads)===sp.number" style="color:#4CAF50;font-weight:600">✅ 匹配！</span></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-secondary flex-1" @click="spResetBeads">🔄 复位</button>
+        <button class="btn btn-primary flex-1" @click="spSubmitBeads">✓ 提交</button>
+      </div>
+    </div>
+    <div v-if="sp.phase==='feedback'" class="feedback-box" :class="sp.lastOk?'ok':'ng'">
+      <div style="font-size:24px;font-weight:700">{{sp.lastOk?'✅ 正确！':'❌ 错误'}}</div>
+      <div class="feedback-label">正确答案：<span class="feedback-val correct">{{sp.number}}</span></div>
+      <div v-if="!sp.lastOk" class="feedback-label">你的珠值：<span class="feedback-val wrong">{{beadsToNum(sp.beads)}}</span></div>
+    </div>
+  </div>
+  <div class="text-center mt-12"><button class="btn btn-secondary" @click="exitSpecial">退出训练</button></div>
+</div>
+
+<!-- ========== 看珠译数训练 ========== -->
+<div v-if="page==='spTrain'&&spCfg.type==='beadToNum'" class="container">
+  <div class="progress-bar">
+    <div>第 {{sp.idx+1}} / {{spCfg.count}} 题</div>
+    <div class="stats"><span class="stat-correct">✓{{sp.ok}}</span><span class="stat-wrong">✗{{sp.err}}</span></div>
+  </div>
+  <div class="card">
+    <div v-if="sp.phase==='show'" class="text-center">
+      <div class="flash-hint">👀 观察这个珠像</div>
+      <div class="abacus-wrap">
+        <div v-for="(col,i) in sp.beads" :key="i" class="bead-col">
+          <div class="bead-upper"><div v-for="j in 2" :key="'u'+j" class="bead" :class="{active:j>(2-col.upper)}"></div></div>
+          <div class="bead-divider"></div>
+          <div class="bead-lower"><div v-for="j in 4" :key="'l'+j" class="bead" :class="{active:j<=col.lower}"></div></div>
+        </div>
+      </div>
+      <div class="flash-hint" style="color:#FF6B35;font-weight:600">{{sp.countdown}}s</div>
+    </div>
+    <div v-if="sp.phase==='input'" class="text-center">
+      <div class="flash-hint">请输入你读到的数字：</div>
+      <input type="text" inputmode="numeric" class="flash-input" v-model="sp.userInput" placeholder="输入数字" @keyup.enter="spSubmitNum">
+      <button class="btn btn-primary btn-block mt-12" @click="spSubmitNum" :disabled="!sp.userInput">✓ 提交</button>
+    </div>
+    <div v-if="sp.phase==='feedback'" class="feedback-box" :class="sp.lastOk?'ok':'ng'">
+      <div style="font-size:24px;font-weight:700">{{sp.lastOk?'✅ 正确！':'❌ 错误'}}</div>
+      <div class="feedback-label">正确答案：<span class="feedback-val correct">{{sp.number}}</span></div>
+      <div v-if="!sp.lastOk" class="feedback-label">你的答案：<span class="feedback-val wrong">{{sp.userInput}}</span></div>
+    </div>
+  </div>
+  <div class="text-center mt-12"><button class="btn btn-secondary" @click="exitSpecial">退出训练</button></div>
+</div>
+
+<!-- ========== 数码秒记训练 ========== -->
+<div v-if="page==='spTrain'&&spCfg.type==='flashMemory'" class="container">
+  <div class="progress-bar">
+    <div>第 {{sp.idx+1}} / {{spCfg.count}} 题</div>
+    <div class="stats"><span class="stat-correct">✓{{sp.ok}}</span><span class="stat-wrong">✗{{sp.err}}</span><span v-if="sp.streak>2" style="color:#FF6B35;font-weight:600">🔥{{sp.streak}}</span></div>
+  </div>
+  <div class="card">
+    <div v-if="sp.phase==='flash'" class="text-center">
+      <div class="flash-hint">👀 记住这个数字！</div>
+      <div class="flash-box visible">{{sp.number}}</div>
+    </div>
+    <div v-if="sp.phase==='hide'" class="text-center">
+      <div class="flash-hint">回忆刚才的数字...</div>
+      <div class="flash-box hidden">???</div>
+    </div>
+    <div v-if="sp.phase==='input'" class="text-center">
+      <div class="flash-hint">请输入你记住的数字：</div>
+      <div class="flash-box hidden" style="font-size:36px;letter-spacing:4px">{{sp.userInput||'_'}}</div>
+      <div class="numpad">
+        <div v-for="n in [1,2,3,4,5,6,7,8,9]" :key="n" class="numpad-btn" @click="sp.userInput+=n">{{n}}</div>
+        <div class="numpad-btn" @click="sp.userInput+='0'">0</div>
+        <div class="numpad-btn action" @click="sp.userInput=sp.userInput.slice(0,-1)">⌫</div>
+      </div>
+      <button class="btn btn-primary btn-block" @click="spSubmitFlash" :disabled="!sp.userInput">✓ 提交答案</button>
+    </div>
+    <div v-if="sp.phase==='feedback'" class="feedback-box" :class="sp.lastOk?'ok':'ng'">
+      <div style="font-size:24px;font-weight:700">{{sp.lastOk?'✅ 正确！':'❌ 错误'}}</div>
+      <div class="feedback-label">正确答案：<span class="feedback-val correct">{{sp.number}}</span></div>
+      <div v-if="!sp.lastOk" class="feedback-label">你的答案：<span class="feedback-val wrong">{{sp.userInput}}</span></div>
+    </div>
+  </div>
+  <div class="text-center mt-12"><button class="btn btn-secondary" @click="exitSpecial">退出训练</button></div>
+</div>
+
+<!-- ========== 定级考试 - 级别选择 ========== -->
+<div v-if="page==='examSelect'" class="container">
+  <div class="header"><div style="display:flex;align-items:center;gap:8px"><button class="btn btn-secondary" style="padding:6px 10px;font-size:14px" @click="page='home'">&larr;</button><div style="flex:1"><h1 style="font-size:18px;margin:0">🎓 定级考试</h1><p style="color:#FF6B35;font-size:12px;margin-top:2px">中国珠算心算协会官方标准</p></div></div></div>
+  <div class="exam-sys-tabs">
+    <div v-for="s in examSystems" :key="s.key" class="exam-sys-tab" :class="{selected:examSys===s.key}" @click="examSelectSys(s.key)">
+      <span class="icon">{{s.icon}}</span><span class="name">{{s.name}}</span><div class="desc">{{s.desc}}</div>
+    </div>
+  </div>
+  <div v-if="examSys" class="card">
+    <div class="card-title">选择考试级别</div>
+    <div class="exam-level-grid">
+      <div v-for="lv in examLevels" :key="lv.level" class="exam-level-card" :class="{selected:examLv===lv.level,locked:examIsLocked(lv.level)}" @click="examSelectLv(lv)">
+        <div v-if="examLevelPassed(lv.level)" class="exam-pass-badge">✓ 已通过</div>
+        <div class="exam-level-badge">{{examDispLevel(lv.level)}}</div>
+        <span class="exam-level-name">{{lv.name}}</span>
+        <span class="exam-level-desc">{{lv.description}}</span>
+        <div style="display:flex;justify-content:space-around;border-top:1px solid #f0f0f0;padding-top:8px;font-size:10px;color:#999;margin-top:8px">
+          <div>限时 <span style="color:#FF6B35;font-weight:600">{{lv.timeLimit}}分钟</span></div>
+          <div>通过 <span style="color:#FF6B35;font-weight:600">{{examPassInfo(lv)}}</span></div>
+        </div>
+        <div v-if="examIsLocked(lv.level)" class="exam-lock-overlay"><div style="font-size:24px">🔒</div><div>未解锁</div></div>
+      </div>
+    </div>
+  </div>
+  <div v-if="examLv" class="card">
+    <div class="card-title">📋 考试说明</div>
+    <div class="exam-info-row"><span style="color:#666">考试级别</span><span style="font-weight:500">{{examLevelName}}</span></div>
+    <div class="exam-info-row"><span style="color:#666">考试时长</span><span style="font-weight:500">{{examTimeLimit}}分钟</span></div>
+    <div class="exam-info-row"><span style="color:#666">题目数量</span><span style="font-weight:500">{{examQCount}}题</span></div>
+    <div class="exam-info-row"><span style="color:#666">通过标准</span><span style="font-weight:500">{{examPassCriteria}}</span></div>
+    <div class="exam-info-row"><span style="color:#666">考试科目</span><div><span v-for="s in examSubjects" :key="s" class="exam-subject-tag">{{s}}</span></div></div>
+  </div>
+  <div v-if="examLv" class="flex-row mt-12"><button class="btn btn-primary flex-1" @click="startExam" style="padding:14px;font-size:16px">🚀 开始定级考试</button></div>
+  <div class="card mt-12">
+    <div class="card-title">📊 考试记录</div>
+    <div v-if="!examHistory.length" class="text-center" style="padding:20px;color:#999"><div style="font-size:32px;margin-bottom:8px">📝</div>暂无考试记录</div>
+    <div v-for="r in examHistory.slice(0,8)" :key="r.id" class="exam-hist-item">
+      <div><div style="font-size:13px;font-weight:600">{{r.levelName}}</div><div style="font-size:11px;color:#999;margin-top:2px">{{examFmtDate(r.examDate)}}</div></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="text-align:right"><div style="font-size:16px;font-weight:700" :style="{color:r.passed?'#4CAF50':'#FF6B35'}">{{r.accuracy}}%</div><div style="font-size:10px;color:#999">正确率</div></div>
+        <span :style="{background:r.passed?'#E8F5E9':'#FFEBEE',color:r.passed?'#4CAF50':'#F44336',padding:'4px 10px',borderRadius:'6px',fontSize:'12px',fontWeight:600}">{{r.passed?'✓ 通过':'✗ 未通过'}}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 定级考试 - 答题 ========== -->
+<div v-if="page==='examAnswer'" class="container">
+  <div class="exam-top-bar">
+    <div><div style="font-size:15px;font-weight:600">{{examLevelName}}</div><div style="font-size:11px;color:#999">第 {{examIdx+1}} / {{examQs.length}} 题</div></div>
+    <div class="exam-timer" :class="{warn:examRemain<=60}">⏱️ {{examFmtTime(examRemain)}}</div>
+  </div>
+  <div class="exam-progress-track"><div class="exam-progress-fill" :style="{width:((examIdx+1)/examQs.length*100)+'%'}"></div></div>
+  <div class="card">
+    <div class="exam-question-type"><span style="font-size:16px">{{examCurType==='addsub'?'➕':'✖️'}}</span> {{examCurType==='addsub'?'加减算':examCurType==='multiply'?'乘算':'除算'}}</div>
+    <div class="exam-question-text">{{examCurText}}</div>
+  </div>
+  <div class="text-center" style="margin:16px 0"><div class="exam-answer-display" :class="{empty:!examAns}">{{examAns||'点击数字输入答案'}}</div></div>
+  <div class="exam-numpad">
+    <div v-for="n in [1,2,3,4,5,6,7,8,9]" :key="n" class="exam-numpad-btn" @click="examAns+=n">{{n}}</div>
+    <div class="exam-numpad-btn" @click="examAns+='.'">.</div>
+    <div class="exam-numpad-btn" @click="examAns+='0'">0</div>
+    <div class="exam-numpad-btn del" @click="examAns=examAns.slice(0,-1)">⌫</div>
+  </div>
+  <button class="btn btn-primary btn-block" @click="examSubmitAns" :disabled="!examAns" style="margin-top:8px">{{examIdx>=examQs.length-1?'提交考试':'下一题 →'}}</button>
+  <div v-if="examShowResult" class="exam-result-modal" @click.stop>
+    <div class="exam-result-box">
+      <div style="font-size:48px">🎉</div><div style="font-size:20px;font-weight:700;margin:8px 0">考试完成！</div>
+      <div style="background:linear-gradient(135deg,#FF6B35,#FFA726);color:#fff;border-radius:16px;padding:20px;margin:16px 0"><div style="font-size:48px;font-weight:700">{{examAccuracy}}%</div><div style="opacity:.9">正确率</div></div>
+      <div style="display:flex;gap:12px;margin:16px 0">
+        <div style="flex:1;background:#E8F5E9;padding:12px;border-radius:8px"><div style="font-size:20px;font-weight:700;color:#4CAF50">{{examOk}}</div><div style="font-size:11px;color:#999">正确</div></div>
+        <div style="flex:1;background:#FFEBEE;padding:12px;border-radius:8px"><div style="font-size:20px;font-weight:700;color:#F44336">{{examErr}}</div><div style="font-size:11px;color:#999">错误</div></div>
+        <div style="flex:1;background:#f5f5f5;padding:12px;border-radius:8px"><div style="font-size:20px;font-weight:700">{{examFmtTime(examUsed)}}</div><div style="font-size:11px;color:#999">用时</div></div>
+      </div>
+      <div :style="{padding:'12px',borderRadius:'8px',marginBottom:'16px',background:examIsPassed?'#E8F5E9':'#FFEBEE'}">
+        <div style="font-size:28px">{{examIsPassed?'🏆':'💪'}}</div><div style="font-size:16px;font-weight:700">{{examIsPassed?'恭喜通过！':'继续努力'}}</div>
+        <div style="font-size:12px;color:#666;margin-top:4px">{{examIsPassed?'您已达到定级标准':'还需答对'+(examPassThreshold-examOk)+'题'}}</div>
+      </div>
+      <div style="display:flex;gap:8px"><button class="btn btn-secondary flex-1" @click="examShowResult=false;page='examSelect';loadExamHistory()">返回</button><button v-if="examIsPassed" class="btn btn-primary flex-1" @click="showCert">🎓 生成证书</button><button v-else class="btn btn-primary flex-1" @click="examRetry">🔄 重新考试</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 定级考试 - 证书 ========== -->
+<div v-if="page==='examCert'" class="exam-cert-page">
+  <canvas ref="certCanvas" width="750" height="1060" class="exam-cert-canvas" style="width:375px;height:530px"></canvas>
+  <div class="exam-cert-actions"><button class="btn btn-secondary" @click="page='examSelect';loadExamHistory()">返回</button><button class="btn btn-primary" @click="downloadCert">💾 保存证书</button></div>
+</div>
+
+<!-- 底部导航 -->
+<div class="tab-bar">
+  <div class="tab-item" :class="{active:page==='home'}" @click="page='home'"><div class="tab-icon">🏠</div><div class="tab-label">首页</div></div>
+  <div class="tab-item" :class="{active:page==='homeworkList'}" @click="goTodayHW()"><div class="tab-icon">📅</div><div class="tab-label">当天作业</div></div>
+  <div class="tab-item" :class="{active:page==='errorBook'}" @click="page='errorBook';refreshErrorBook()"><div class="tab-icon">📕</div><div class="tab-label">错题集</div></div>
+</div>
+</div>
+
+<script>
+const{createApp,ref,reactive,computed,watch,nextTick,onMounted}=Vue
+const DIGITS=['零','一','二','三','四','五','六','七','八','九'],UNITS=['','十','百','千']
+function num2cn(n){
+  n=Math.abs(Math.floor(n));if(!n)return'零';if(n<10)return DIGITS[n];if(n<20)return'十'+(n%10?DIGITS[n%10]:'')
+  function four(num){if(!num)return'';const d=String(num).split('').map(Number);let r='',nz=false;for(let i=0;i<d.length;i++){if(!d[i]){nz=true;continue}if(nz&&r.length)r+='零';nz=false;r+=DIGITS[d[i]]+UNITS[d.length-1-i]}return r}
+  const yi=Math.floor(n/1e8),wan=Math.floor(n%1e8/1e4),ge=n%1e4;let r=''
+  if(yi)r+=four(yi)+'亿';if(wan){if(r&&wan<1000)r+='零';r+=four(wan)+'万'};if(ge){if(r&&ge<1000)r+='零';r+=four(ge)};return r
+}
+class RNG{constructor(s){this.s=typeof s==='string'?this.h(s):s||Date.now()}h(s){let v=0;for(let i=0;i<s.length;i++)v=((v<<5)-v)+s.charCodeAt(i);return Math.abs(v)}next(){this.s=(this.s*1103515245+12345)&0x7fffffff;return this.s/0x7fffffff}int(a,b){return Math.floor(this.next()*(b-a+1))+a}}
+
+// ===== TTS =====
+let nativeTTSBroken=false,audioEl=null,audioUnlocked=false,nativeTTSReady=false
+function unlockAudio(){if(audioUnlocked)return;try{if(!audioEl)audioEl=new Audio();audioEl.src='data:audio/mp3;base64,SUQzBAAAAAAABAAAAABJAAAASUQzBAAAAAA=';audioEl.volume=0.01;audioEl.play().then(()=>{audioUnlocked=true;audioEl.pause()}).catch(()=>{})}catch(e){}}
+function speakNativeTry(t,r=1){return new Promise(resolve=>{if(!window.speechSynthesis){resolve('fail');return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='zh-CN';u.rate=r;let settled=false;const done=(result)=>{if(!settled){settled=true;resolve(result)}};u.onstart=()=>done('ok');u.onend=()=>done('ok');u.onerror=()=>done('fail');speechSynthesis.speak(u);setTimeout(()=>done('fail'),150)})}
+function speakNativeWait(t,r=1){return new Promise(ok=>{if(!window.speechSynthesis){ok();return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='zh-CN';u.rate=r;let done=false;const finish=()=>{if(!done){done=true;ok()}};u.onend=finish;u.onerror=finish;speechSynthesis.speak(u);setTimeout(finish,Math.max(3000,t.length*400))})}
+function speakOnline(t,spd=5){return new Promise(ok=>{const url=`https://fanyi.baidu.com/gettts?lan=zh&text=${encodeURIComponent(t)}&spd=${spd}&source=web`;try{if(!audioEl)audioEl=new Audio();audioEl.src=url;audioEl.volume=1;let done=false;const finish=()=>{if(!done){done=true;ok()}};audioEl.onended=finish;audioEl.onerror=finish;const p=audioEl.play();if(p&&p.then){p.then(()=>setTimeout(finish,5000)).catch(()=>setTimeout(finish,Math.round(t.length*200)))}else{setTimeout(finish,Math.round(t.length*300))}}catch(e){setTimeout(ok,Math.round(t.length*200))}})}
+function hasNativeTTS(){if(nativeTTSBroken)return false;try{if(!window.speechSynthesis)return false;if(nativeTTSReady)return true;const v=speechSynthesis.getVoices();if(v&&v.length>0){nativeTTSReady=true;return true}return false}catch(e){return false}}
+async function speak(t,r=1,spd=6){if(hasNativeTTS()){if(!nativeTTSReady){const result=await speakNativeTry(t,r);if(result==='ok'){nativeTTSReady=true;await speakNativeWait(t,r);return}else{nativeTTSBroken=true;speechSynthesis?.cancel()}}else{await speakNativeWait(t,r);return}}await speakOnline(t,spd);await new Promise(r=>setTimeout(r,50))}
+const delay=ms=>new Promise(r=>setTimeout(r,ms))
+
+// ===== 整段TTS音频预缓存系统 =====
+// 每个播报段整段下载百度TTS（<audio>绕过CORS），语调自然连贯
+const _qAudioCache=new Map();let _qAudioReady=false
+let _playStop=false
+function stopAllAudio(){_playStop=true;try{speechSynthesis?.cancel()}catch(e){}try{if(audioEl){audioEl.pause();audioEl.src=''}}catch(e){}_qAudioCache.forEach(el=>{try{el.pause();el.currentTime=0}catch(e){}})}
+// playbackRate 直接作为语速值，0.25x~4.0x
+
+function _ttsUrl(text){return `https://fanyi.baidu.com/gettts?lan=zh&text=${encodeURIComponent(text)}&spd=5&source=web`}
+
+function _buildSegTexts(q){
+  const texts=['请听题']
+  for(let i=0;i<q.operands.length;i++){
+    const n=q.operands[i],op=i>0?q.operators[i-1]:''
+    let text=''
+    if(op==='-')text='减'+num2cn(n)
+    else if(op==='×')text='乘以'+num2cn(n)
+    else if(op==='÷')text='除以'+num2cn(n)
+    else text=num2cn(n)
+    texts.push(text)
+  }
+  return texts
+}
+
+function preloadQuestionsAudio(questions){
+  if(_qAudioReady)return Promise.resolve()
+  const allTexts=new Set()
+  allTexts.add('请听题');allTexts.add('答对了');allTexts.add('答错了')
+  for(const q of questions){for(const t of _buildSegTexts(q))allTexts.add(t)}
+  const entries=Array.from(allTexts)
+  if(entries.length===0){_qAudioReady=true;return Promise.resolve()}
+  return new Promise(resolve=>{
+    let loaded=0;const total=entries.length
+    for(const text of entries){
+      const a=new Audio();a.preload='auto';a.src=_ttsUrl(text)
+      a.addEventListener('canplaythrough',()=>{
+        if(!_qAudioCache.has(text)){_qAudioCache.set(text,a);loaded++
+          if(loaded>=total){_qAudioReady=true;console.log(`[TTS] 预缓存完成: ${loaded}/${total}`);resolve()}}
+      },{once:true})
+      a.addEventListener('error',()=>{loaded++;console.warn('[TTS] 加载失败:',text);
+        if(loaded>=total){_qAudioReady=_qAudioCache.size>0;resolve()}},{once:true})
+      a.load()
+    }
+    setTimeout(()=>{_qAudioReady=_qAudioCache.size>0;console.log(`[TTS] 超时, 已缓存: ${_qAudioCache.size}/${total}`);resolve()},15000)
+  })
+}
+
+async function playCachedSegs(texts,speedLevel){
+  if(!_qAudioReady||texts.length===0)return false
+  _playStop=false
+  const rate=speedLevel||1.0
+  let played=0
+  for(const t of texts){
+    if(_playStop){return false}
+    const el=_qAudioCache.get(t)
+    if(el){
+      el.pause();el.currentTime=0;el.playbackRate=rate
+      await new Promise(r=>{const onSeeked=()=>{el.removeEventListener('seeked',onSeeked);r()};el.addEventListener('seeked',onSeeked);setTimeout(r,150)})
+      if(_playStop){try{el.pause();el.currentTime=0}catch(e){}return false}
+      try{await new Promise((ok,no)=>{
+        el.addEventListener('ended',ok,{once:true})
+        const p=el.play();if(p&&p.then)p.catch(no)
+        setTimeout(()=>{try{el.pause();el.currentTime=0}catch(e){}ok()},((el.duration||0.5)/rate+0.5)*1000)
+      })}catch(e){console.warn('[TTS] 播放失败:',e);return false}
+      played++
+    }else{
+      try{await speak(t,rate,5)}catch(e){console.warn('[TTS] speak回退失败:',t,e)}
+      played++
+    }
+  }
+  return played>0
+}
+async function playFeedback(ok){
+  const text=ok?'答对了':'答错了'
+  const el=_qAudioCache.get(text)
+  if(el&&_qAudioReady){
+    el.pause();el.currentTime=0;el.playbackRate=1.0
+    await new Promise(r=>{const onSeeked=()=>{el.removeEventListener('seeked',onSeeked);r()};el.addEventListener('seeked',onSeeked);setTimeout(r,150)})
+    await new Promise((ok2)=>{el.addEventListener('ended',ok2,{once:true});el.play();setTimeout(ok2,2000)})
+  }else{try{await speak(text,1.0,5)}catch(e){}}
+}
+function preloadFeedbackAudio(){
+  const texts=['答对了','答错了']
+  for(const text of texts){
+    if(_qAudioCache.has(text))continue
+    const a=new Audio();a.preload='auto';a.src=_ttsUrl(text)
+    a.addEventListener('canplaythrough',()=>{if(!_qAudioCache.has(text)){_qAudioCache.set(text,a);if(_qAudioCache.size>=texts.length)_qAudioReady=true}},{once:true})
+    a.addEventListener('error',()=>{},{once:true})
+    a.load()
+  }
+}
+
+// ===== 出题引擎 =====
+function hasCarry(a,b){let c=0;for(let i=0;i<10;i++){const d1=Math.floor(a/Math.pow(10,i))%10,d2=Math.floor(b/Math.pow(10,i))%10;if(d1+d2+c>=10)return true;c=d1+d2+c>=10?1:0;if(!d1&&!d2&&!c)break}return false}
+function hasBorrow(a,b){return a<b||hasCarry(a-b,b)}
+function genAddSub(cfg,rng){
+  const minI=Math.pow(10,Math.max(1,cfg.minDigit||1)-1),maxI=Math.pow(10,cfg.maxDigit||2)-1,decD=cfg.decDigit||0
+  const rand=()=>{const ip=rng.int(Math.max(1,minI),maxI);if(decD===0)return ip;const dp=rng.int(decD===1?0:Math.pow(10,decD-1),Math.pow(10,decD)-1);return parseFloat(ip+'.'+String(dp).padStart(decD,'0'))}
+  const opType=cfg.opType,subOpType=cfg.subOpType||'carry_add',addSubGroup=cfg.addSubGroup
+  for(let att=0;att<100;att++){const ops=[rand()],opr=[];let sum=ops[0],ok=true;for(let i=1;i<cfg.numCount;i++){let n,op,tries=0;do{n=rand();tries++;if(opType==='direct_add'&&!addSubGroup){op='+';if(hasCarry(sum,n))continue;break}if(opType==='carry_add'&&!addSubGroup){op='+';if(!hasCarry(sum,n))continue;break}if(opType==='direct_sub'&&!addSubGroup){if(sum-n>=0&&!hasBorrow(sum,n)){op='-';break}if(tries>=19){op='+';break}continue}if(opType==='borrow_sub'&&!addSubGroup){if(sum-n>=0&&hasBorrow(sum,n)){op='-';break}if(tries>=19){op='+';break}continue}if(addSubGroup==='direct'){if(rng.next()>.5){op='+';if(hasCarry(sum,n))continue}else{if(sum>=n&&!hasBorrow(sum,n)){op='-'}else if(tries>=19){op='+'}else continue}}else{if(rng.next()>.5){op='+';if(!hasCarry(sum,n))continue}else{if(sum>=n&&hasBorrow(sum,n)){op='-'}else if(tries>=19){op='+'}else continue}}break}while(tries<20);opr.push(op);ops.push(n);sum=op==='+'?sum+n:sum-n;if(sum<0){ok=false;break}}if(ok)return{operands:ops,operators:opr,answer:sum}}
+  const ops=[rand()],opr=[];let sum=ops[0];for(let i=1;i<cfg.numCount;i++){const n=rand();opr.push('+');sum+=n;ops.push(n)};return{operands:ops,operators:opr,answer:sum}
+}
+function genMul(cfg,rng){
+  const minI=Math.pow(10,Math.max(1,cfg.minDigit||1)-1),maxI=Math.pow(10,cfg.maxDigit||2)-1,decD=cfg.decDigit||0,numCount=cfg.numCount||2
+  const mulMaxD=cfg.mulMaxDigit||1,mulDecD=cfg.mulDecDigit||0
+  const randOp=()=>{const ip=rng.int(Math.max(1,minI),maxI);if(decD===0)return ip;const dp=rng.int(decD===1?0:Math.pow(10,decD-1),Math.pow(10,decD)-1);return parseFloat(ip+'.'+String(dp).padStart(decD,'0'))}
+  const mulMinI=Math.pow(10,Math.max(1,mulMaxD)-1),mulMaxI=Math.pow(10,mulMaxD)-1,pool=cfg.allowed&&cfg.allowed.length?cfg.allowed:[2,3,4,5,6,7,8,9]
+  const randMul=()=>{if(mulMaxD===1&&mulDecD===0)return pool[rng.int(0,pool.length-1)];const ip=rng.int(Math.max(1,mulMinI),mulMaxI);if(mulDecD===0)return ip;const dp=rng.int(mulDecD===1?0:Math.pow(10,mulDecD-1),Math.pow(10,mulDecD)-1);return parseFloat(ip+'.'+String(dp).padStart(mulDecD,'0'))}
+  const ops=[randOp()],oprs=[];for(let i=1;i<numCount;i++){ops.push(randMul());oprs.push('×')};let answer=ops[0];for(let i=1;i<ops.length;i++)answer=parseFloat((answer*ops[i]).toFixed(10));return{operands:ops,operators:oprs,answer}
+}
+function genDiv(cfg,rng){
+  const minI=Math.pow(10,Math.max(1,cfg.minDigit||1)-1),maxI=Math.pow(10,cfg.maxDigit||2)-1,decD=cfg.decDigit||0,numCount=cfg.numCount||2
+  const divMaxD=cfg.mulMaxDigit||1,divDecD=cfg.mulDecDigit||0,ansDecD=cfg.ansDecDigit||0
+  const pool=cfg.allowed&&cfg.allowed.length?cfg.allowed:[2,3,4,5,6,7,8,9]
+  const randDivisor=()=>{if(divMaxD===1&&divDecD===0)return pool[rng.int(0,pool.length-1)];const ip=rng.int(Math.max(2,Math.pow(10,Math.max(1,divMaxD)-1)),Math.pow(10,divMaxD)-1);if(divDecD===0)return ip;const dp=rng.int(divDecD===1?0:Math.pow(10,divDecD-1),Math.pow(10,divDecD)-1);return parseFloat(ip+'.'+String(dp).padStart(divDecD,'0'))}
+  const decMul=Math.pow(10,ansDecD)
+  // 先生成商（受 ansDecDigit 控制），再反推被除数 = 商 × 除数
+  const divCount=numCount-1
+  const genQuotient=()=>{
+    const intPart=rng.int(Math.max(1,minI),maxI)
+    if(ansDecD===0)return intPart
+    const frac=rng.int(ansDecD===1?1:Math.pow(10,ansDecD-1),Math.pow(10,ansDecD)-1)
+    return parseFloat(intPart+'.'+String(frac).padStart(ansDecD,'0'))
+  }
+  for(let attempt=0;attempt<50;attempt++){
+    const quotient=genQuotient()
+    const divisors=[]
+    if(divMaxD===1&&divDecD===0){
+      // 单位数除数：从 pool 中选能整除商的
+      const intQ=ansDecD===0?quotient:Math.round(quotient*decMul)
+      const vf=pool.filter(d=>intQ%d===0)
+      if(vf.length===0)continue
+      for(let i=0;i<divCount;i++){
+        const curVf=ansDecD===0?vf.filter(d=>{
+          let q=quotient;for(const dd of divisors)q/=dd;return Number.isInteger(q)&&q%d===0
+        }):vf
+        if(curVf.length>0)divisors.push(curVf[rng.int(0,curVf.length-1)])
+        else{divisors.push(vf[rng.int(0,vf.length-1)])}
+      }
+    }else{
+      for(let i=0;i<divCount;i++)divisors.push(randDivisor())
+    }
+    // 被除数 = 商 × 所有除数
+    let dividend=quotient;for(const d of divisors)dividend=parseFloat((dividend*d).toFixed(10))
+    // 验证被除数位数是否符合配置
+    const intStr=String(Math.floor(Math.abs(dividend)))
+    const dStr=String(dividend),dDot=dStr.indexOf('.'),actualDecD=dDot>=0?dStr.length-dDot-1:0
+    if(intStr.length>=Math.max(1,cfg.minDigit||1)&&intStr.length<=(cfg.maxDigit||2)&&actualDecD<=decD){
+      const ops=[dividend,...divisors],oprs=divisors.map(()=>'÷')
+      return{operands:ops,operators:oprs,answer:quotient}
+    }
+  }
+  // 兜底：生成商后直接乘除数
+  const quotient=genQuotient();const divisors=[];for(let i=0;i<divCount;i++)divisors.push(randDivisor())
+  let dividend=quotient;for(const d of divisors)dividend=parseFloat((dividend*d).toFixed(10))
+  const ops=[dividend,...divisors],oprs=divisors.map(()=>'÷')
+  return{operands:ops,operators:oprs,answer:quotient}
+}
+function genQ(type,cfg,rng){
+  const d={minDigit:cfg.minDigit||1,maxDigit:cfg.maxDigit||2,decDigit:cfg.decDigit||0,numCount:cfg.numCount||(type==='multiply'||type==='divide'?2:3),mulMaxDigit:cfg.mulMaxDigit||1,mulDecDigit:cfg.mulDecDigit||0,ansDecDigit:cfg.ansDecDigit||0}
+  if(type==='multiply')return genMul({...d,allowed:cfg.allowed||[]},rng)
+  if(type==='divide')return genDiv({...d,decimals:cfg.decimals||0,allowed:cfg.allowed||[]},rng)
+  return genAddSub({numCount:d.numCount,minDigit:d.minDigit,maxDigit:d.maxDigit,decDigit:d.decDigit,opType:cfg.opType||'direct_add',subOpType:cfg.subOpType,addSubGroup:cfg.addSubGroup},rng)
+}
+function fmtQ(q){let s=String(q.operands[0]);for(let i=0;i<q.operators.length;i++)s+=` ${q.operators[i]} ${q.operands[i+1]}`;return s}
+
+// ===== App =====
+createApp({
+  setup(){
+    const page=ref('home')
+    const hwTypes=[
+      {value:'addition',label:'加法'},{value:'subtraction',label:'减法'},
+      {value:'multiply',label:'乘法'},{value:'divide',label:'除法'},
+      {value:'addSub',label:'加减'},{value:'listening',label:'听心算'}
+    ]
+    const speedOpts=Array.from({length:16},(_,i)=>{const v=(i+1)*0.25;return{v,l:v+'x'}})
+
+    function defaultHW(){
+      const today=new Date()
+      const isoToday=today.toISOString().split('T')[0]
+      const isoWeekLater=new Date(today.getTime()+6*86400000).toISOString().split('T')[0]
+      return{title:'',type:'addition',opType:'direct_add',subOpType:'carry_add',
+        numCount:3,minDigit:1,maxDigit:2,decDigit:0,
+        mulMaxDigit:1,mulDecDigit:0,allowedDigits:[],ansDecDigit:0,
+        config:{questionCount:10,mode:'visual',speed:1,interval:0.8},
+        publishMode:'immediate',scheduleStartDate:isoToday,scheduleEndDate:isoWeekLater}
+    }
+    const hw=reactive(defaultHW())
+    const trainType=ref('addition')
+    const trainCfg=reactive({opType:'direct_add',subOpType:'carry_add',numCount:3,minDigit:1,maxDigit:2,decDigit:0,mulMaxDigit:1,mulDecDigit:0,allowedDigits:[],ansDecDigit:0,questionCount:10,mode:'visual',speed:1,interval:0.8})
+    const homeworks=ref(JSON.parse(localStorage.getItem('fastcal_hw')||'[]'))
+    const submissions=ref(JSON.parse(localStorage.getItem('fastcal_sub')||'[]'))
+    // 自动出题计划列表（localStorage: fastcal_hw_plans）
+    const hwPlans=ref(JSON.parse(localStorage.getItem('fastcal_hw_plans')||'[]'))
+    const showPlans=ref(false)
+    const train=reactive({qs:[],idx:0,ok:0,err:0,answers:[],input:'',canAns:false,display:'',broadcast:'',showTimer:false,time:60,mode:'visual',total:10,usedTime:0,accuracy:0,hwTitle:''})
+    let timer=null,startT=0,curHWId=null
+
+    const isAddSubType=computed(()=>['addition','subtraction','addSub'].includes(hw.type))
+    const currentTypeLabel=computed(()=>hwTypes.find(t=>t.value===hw.type)?.label||'')
+    const numCountMin=computed(()=>{if(hw.type==='multiply'||hw.type==='divide')return 2;if(hw.type==='addSub')return 3;return 2})
+    const numCountMax=computed(()=>{if(hw.type==='multiply'||hw.type==='divide')return 5;if(hw.type==='addSub')return 10;return(hw.opType==='direct_add'||hw.opType==='direct_sub')?3:9})
+    const trainNumCountMin=computed(()=>{if(hw.type==='multiply'||hw.type==='divide')return 2;if(hw.type==='addSub'&&hw.opType==='direct_add')return 3;return 2})
+    const trainNumCountMax=computed(()=>{if(hw.type==='multiply'||hw.type==='divide')return 8;if(hw.type==='addSub')return 15;return(hw.opType==='direct_add'||hw.opType==='direct_sub')?5:12})
+    const digitMax=computed(()=>(hw.type==='multiply'||hw.type==='divide')?7:6)
+    const digitOptions=computed(()=>{const a=[];for(let i=1;i<=digitMax.value;i++)a.push(i);return a})
+
+    watch([()=>hw.type,()=>hw.opType],()=>{
+      const mn=(page.value==='configTrain')?trainNumCountMin.value:numCountMin.value
+      const mx=(page.value==='configTrain')?trainNumCountMax.value:numCountMax.value
+      if(hw.numCount<mn)hw.numCount=mn;if(hw.numCount>mx)hw.numCount=mx
+      if(hw.maxDigit>digitMax.value)hw.maxDigit=digitMax.value;if(hw.minDigit>hw.maxDigit)hw.minDigit=hw.maxDigit
+      if(hw.mulMaxDigit>4)hw.mulMaxDigit=4;if(hw.mulDecDigit>4)hw.mulDecDigit=4
+      if(hw.mulMaxDigit>1)hw.allowedDigits=[]
+    })
+    watch(()=>hw.mulMaxDigit,(v)=>{if(v===1){hw.mulDecDigit=0;hw.allowedDigits=[]}})
+    watch(()=>hw.minDigit,(v)=>{if(v>hw.maxDigit)hw.maxDigit=v})
+
+    // ===== 作业 =====
+    const autoTitle=computed(()=>{
+      const typeLabel=hwTypes.find(t=>t.value===hw.type)?.label||''
+      const modeLabel=hw.config.mode==='listening'?'听心算':'看心算'
+      const dateStr=new Date().toISOString().split('T')[0]
+      let batch=1
+      for(const h of homeworks.value){if(h.title&&h.title.startsWith(`${typeLabel}${modeLabel} ${dateStr}`)){const m=h.title.match(/#(\d+)$/);batch=Math.max(batch,(m?parseInt(m[1]):1)+1)}}
+      return `${typeLabel}${modeLabel} ${dateStr} #${batch}`
+    })
+    const hwShowPending=ref(true),hwShowDone=ref(false),hwShowExpired=ref(false)
+    // 已展开的日期集合（默认展开今天）
+    const expandedDates=ref(new Set([new Date().toLocaleDateString()]))
+    function toggleDate(date){
+      const s=new Set(expandedDates.value)
+      if(s.has(date))s.delete(date);else s.add(date)
+      expandedDates.value=s
+    }
+    // 按日期分组 + 日期内按运算类型子分组
+    const groupedHWs=computed(()=>{
+      const now=new Date().toISOString().split('T')[0]
+      const doneSet=new Set(submissions.value.map(s=>s.hwId))
+      let list=homeworks.value.filter(h=>{
+        const isExpired=h.validUntil&&now>h.validUntil;const isDone=doneSet.has(h.id)
+        if(isExpired)return hwShowExpired.value;if(isDone)return hwShowDone.value;return hwShowPending.value
+      })
+      const map={}
+      for(const h of list){
+        const date=h.createdAt||'未知日期'
+        if(!map[date])map[date]={date,items:[],typeGroups:[],expanded:expandedDates.value.has(date)}
+        map[date].items.push(h)
+      }
+      const groups=Object.values(map).sort((a,b)=>b.date.localeCompare(a.date))
+      // 每个日期内按运算类型子分组
+      for(const g of groups){
+        const tMap={}
+        for(const h of g.items){
+          const t=h.type||'unknown'
+          if(!tMap[t])tMap[t]={type:t,typeLabel:h.typeLabel||t,items:[]}
+          tMap[t].items.push(h)
+        }
+        g.typeGroups=Object.values(tMap)
+      }
+      return groups
+    })
+    const pendingHWCount=computed(()=>{
+      const doneSet=new Set(submissions.value.map(s=>s.hwId))
+      const now=new Date().toISOString().split('T')[0]
+      return homeworks.value.filter(h=>!doneSet.has(h.id)&&(!h.validUntil||now<=h.validUntil)).length
+    })
+    function getHWStatus(h){const now=new Date().toISOString().split('T')[0];if(h.validUntil&&now>h.validUntil)return'expired';return submissions.value.some(s=>s.hwId===h.id)?'done':'pending'}
+    function getHWStatusText(h){const s=getHWStatus(h);return s==='expired'?'已截止':s==='done'?'已完成':'待完成'}
+
+    function submitHW(){
+      const typeLabel=hwTypes.find(t=>t.value===hw.type)?.label||''
+      const modeLabel=hw.config.mode==='listening'?'听心算':'看心算'
+      const fullConfig={...hw.config,numCount:hw.numCount,minDigit:hw.minDigit,maxDigit:hw.maxDigit,decDigit:hw.decDigit,opType:hw.opType,subOpType:hw.subOpType,mulMaxDigit:hw.mulMaxDigit,mulDecDigit:hw.mulDecDigit,ansDecDigit:hw.ansDecDigit||0,allowedDigits:[...hw.allowedDigits]}
+
+      // 定时自动发布：创建自动出题计划
+      if(hw.publishMode==='scheduled'){
+        if(!hw.scheduleStartDate||!hw.scheduleEndDate){alert('请选择开始和截止日期');return}
+        if(hw.scheduleStartDate>hw.scheduleEndDate){alert('开始日期不能晚于截止日期');return}
+        const plan={
+          id:'plan_'+Date.now(),
+          name:`${typeLabel}${modeLabel}`,
+          startDate:hw.scheduleStartDate,
+          endDate:hw.scheduleEndDate,
+          type:hw.type,typeLabel,
+          config:fullConfig,
+          createdAt:new Date().toISOString(),
+          enabled:true
+        }
+        hwPlans.value.unshift(plan)
+        localStorage.setItem('fastcal_hw_plans',JSON.stringify(hwPlans.value))
+        // 立即触发一次（若今天在范围内且已过 07:00 则即时生成）
+        runScheduledHWGen()
+        Object.assign(hw,defaultHW())
+        page.value='homeworkList';showPlans.value=true
+        alert(`已创建自动出题计划\n\n${plan.startDate} ~ ${plan.endDate}\n每天早上 07:00 自动生成“${plan.name}”作业`)
+        return
+      }
+
+      // 立即发布（原逻辑）
+      const now=new Date();const dateStr=now.toISOString().split('T')[0]
+      const baseTitle=`${typeLabel}${modeLabel} ${dateStr}`
+      let batch=1;for(const h of homeworks.value){if(h.title&&h.title.startsWith(baseTitle)){const m=h.title.match(/#(\d+)$/);batch=Math.max(batch,(m?parseInt(m[1]):1)+1)}}
+      homeworks.value.unshift({id:'hw_'+Date.now(),title:`${baseTitle} #${batch}`,type:hw.type,typeLabel,
+        config:fullConfig,createdAt:now.toLocaleDateString()})
+      localStorage.setItem('fastcal_hw',JSON.stringify(homeworks.value))
+      Object.assign(hw,defaultHW());page.value='homeworkList'
+    }
+    function deleteHW(id){homeworks.value=homeworks.value.filter(h=>h.id!==id);localStorage.setItem('fastcal_hw',JSON.stringify(homeworks.value))}
+
+    // 自动出题计划管理
+    function toggleHWPlan(id){
+      const p=hwPlans.value.find(x=>x.id===id)
+      if(!p)return
+      p.enabled=!p.enabled
+      localStorage.setItem('fastcal_hw_plans',JSON.stringify(hwPlans.value))
+      // 启用后立即触发一次，避免错过当日 07:00
+      if(p.enabled)runScheduledHWGen()
+    }
+    function deleteHWPlan(id){
+      if(!confirm('确定要删除此自动出题计划吗？\n\n已生成的作业不会被删除。'))return
+      hwPlans.value=hwPlans.value.filter(p=>p.id!==id)
+      localStorage.setItem('fastcal_hw_plans',JSON.stringify(hwPlans.value))
+    }
+
+    // 跳转当天作业（底部导航“当天作业”入口）
+    // 行为：切换到作业列表 + 仅展开今天 + 滚到顶部
+    function goTodayHW(){
+      page.value='homeworkList'
+      // 重置展开集合为仅今天，避免之前展开的历史日期干扰
+      expandedDates.value=new Set([new Date().toLocaleDateString()])
+      nextTick(()=>{try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){}})
+    }
+
+    // 清除作业数据（作业+提交+自动出题计划，保留错题和考试历史）
+    function clearHomeworks(){
+      if(!confirm('确定要清除所有作业数据吗？\n\n将清除：\n• 作业记录\n• 提交记录\n• 自动出题计划\n\n错题集和考试历史会保留。\n此操作不可撤销。'))return
+      try{
+        localStorage.removeItem('fastcal_hw')
+        localStorage.removeItem('fastcal_sub')
+        localStorage.removeItem('fastcal_hw_plans')
+        homeworks.value=[]
+        submissions.value=[]
+        hwPlans.value=[]
+        alert('作业数据已清除')
+      }catch(e){alert('清除失败：'+(e&&e.message||e))}
+    }
+
+    function doHomework(h){
+      curHWId=h.id;trainType.value=h.type
+      trainCfg.numCount=h.config.numCount||3;trainCfg.minDigit=h.config.minDigit||1;trainCfg.maxDigit=h.config.maxDigit||2
+      trainCfg.decDigit=h.config.decDigit||0;trainCfg.mulMaxDigit=h.config.mulMaxDigit||1;trainCfg.mulDecDigit=h.config.mulDecDigit||0;trainCfg.ansDecDigit=h.config.ansDecDigit||0
+      trainCfg.allowedDigits=[...(h.config.allowedDigits||[])];trainCfg.opType=h.config.opType||'direct_add';trainCfg.subOpType=h.config.subOpType
+      trainCfg.questionCount=h.config.questionCount;trainCfg.mode=h.config.mode||'visual'
+      trainCfg.speed=h.config.speed||1;trainCfg.interval=h.config.interval||0.8
+      train.hwTitle=h.title||'作业';startTrain()
+    }
+
+    // ===== 训练核心 =====
+    function freeTrain(type){
+      trainType.value=type
+      hw.type=type==='listening'?(['addition','subtraction','multiply','divide'][Math.floor(Math.random()*4)]):type
+      hw.opType=type==='addition'?'direct_add':type==='subtraction'?'direct_sub':'direct_add'
+      hw.config.mode=type==='listening'?'listening':'visual'
+      hw.minDigit=1;hw.maxDigit=2;hw.decDigit=0;hw.mulMaxDigit=1;hw.mulDecDigit=0;hw.allowedDigits=[];hw.ansDecDigit=0
+      hw.numCount=(type==='multiply'||type==='divide')?2:3
+      page.value='configTrain'
+    }
+    function goTrain(){
+      trainType.value=hw.type==='listening'?(['addition','subtraction','multiply','divide'][Math.floor(Math.random()*4)]):hw.type
+      trainCfg.opType=hw.opType||'direct_add';trainCfg.subOpType=hw.subOpType||'carry_add'
+      trainCfg.numCount=hw.numCount||3;trainCfg.minDigit=hw.minDigit||1;trainCfg.maxDigit=hw.maxDigit||2
+      trainCfg.decDigit=hw.decDigit||0;trainCfg.mulMaxDigit=hw.mulMaxDigit||1;trainCfg.mulDecDigit=hw.mulDecDigit||0;trainCfg.ansDecDigit=hw.ansDecDigit||0
+      trainCfg.allowedDigits=[...(hw.allowedDigits||[])];trainCfg.questionCount=hw.config.questionCount||10
+      trainCfg.mode=hw.config.mode||'visual';trainCfg.speed=hw.config.speed||1;trainCfg.interval=hw.config.interval||0.8
+      train.hwTitle=hwTypes.find(t=>t.value===hw.type)?.label||'自由训练';startTrain()
+    }
+    async function startTrain(){
+      unlockAudio()
+      _qAudioCache.clear();_qAudioReady=false
+      const cfg={numCount:trainCfg.numCount,minDigit:trainCfg.minDigit,maxDigit:trainCfg.maxDigit,decDigit:trainCfg.decDigit,
+        mulMaxDigit:trainCfg.mulMaxDigit||1,mulDecDigit:trainCfg.mulDecDigit||0,ansDecDigit:trainCfg.ansDecDigit||0,
+        opType:trainCfg.opType,subOpType:trainCfg.subOpType,allowed:trainCfg.allowedDigits||[],
+        addSubGroup:trainType.value==='addSub'?(trainCfg.opType==='direct_add'?'direct':'carry'):undefined}
+      train.qs=[];for(let i=0;i<trainCfg.questionCount;i++)train.qs.push(genQ(trainType.value,cfg,new RNG(Date.now()+i)))
+      train.idx=0;train.ok=0;train.err=0;train.answers=[];train.total=trainCfg.questionCount
+      train.mode=trainCfg.mode;train.hwTitle=train.hwTitle||'自由训练';startT=Date.now()
+      page.value='train'
+      await nextTick()
+      // 听心算模式：预缓存整段TTS音频
+      if(trainCfg.mode==='listening'){
+        train.broadcast='正在加载音频...';await nextTick()
+        const loadStart=Date.now();await preloadQuestionsAudio(train.qs)
+        const elapsed=Date.now()-loadStart;if(elapsed<500)await new Promise(r=>setTimeout(r,500-elapsed))
+      }else preloadFeedbackAudio()
+      nextTick(()=>showQ())
+    }
+    let _submitting=false
+    async function showQ(){
+      stopAllAudio();_playStop=false
+      const q=train.qs[train.idx];if(!q)return
+      train.input='';train.canAns=false;train.broadcast='';train.showTimer=false
+      if(train.mode==='visual'){
+        train.display=fmtQ(q);train.canAns=true;startTimer();nextTick(()=>{const el=document.querySelector('.answer-input');if(el)el.focus()})
+      }else{
+        train.broadcast='准备...';await delay(600)
+        if(_playStop)return
+        const texts=_buildSegTexts(q)
+        train.broadcast='播报中...'
+        if(_qAudioReady&&await playCachedSegs(texts,trainCfg.speed)){}
+        else{for(const t of texts){if(_playStop)return;try{await speak(t,trainCfg.speed,trainCfg.speed)}catch(e){}}}
+        if(_playStop)return
+        train.broadcast='请输入答案';train.canAns=true;startTimer();nextTick(()=>{const el=document.querySelector('.answer-input');if(el)el.focus()})
+      }
+    }
+    function startTimer(){train.showTimer=true;train.time=60;if(timer)clearInterval(timer);timer=setInterval(()=>{train.time--;if(train.time<=0)submitAns()},1000)}
+    async function submitAns(){
+      if(_submitting)return;_submitting=true
+      if(timer){clearInterval(timer);timer=null}train.showTimer=false;train.canAns=false
+      const q=train.qs[train.idx];const ua=parseFloat(train.input)||0;const ok=Math.abs(ua-q.answer)<0.01
+      if(ok)train.ok++;else train.err++
+      await playFeedback(ok)
+      train.answers.push({q,ans:q.answer,user:ua,ok})
+      train.idx++
+      if(train.idx>=train.total){
+        train.usedTime=Math.round((Date.now()-startT)/1000);train.accuracy=train.total>0?Math.round(train.ok/train.total*100):0
+        if(curHWId){submissions.value.push({hwId:curHWId,answers:train.answers,ok:train.ok,time:train.usedTime,date:new Date().toLocaleDateString()});localStorage.setItem('fastcal_sub',JSON.stringify(submissions.value));curHWId=null}
+        else{const localSubs=JSON.parse(localStorage.getItem('fastcal_errors')||'[]');for(const a of train.answers){if(!a.ok)localSubs.push({display:fmtQ(a.q),answer:a.ans,user:a.user,type:trainType.value,date:new Date().toLocaleDateString()})}localStorage.setItem('fastcal_errors',JSON.stringify(localSubs))}
+        page.value='result'
+      }else nextTick(()=>showQ())
+      _submitting=false
+    }
+    function exitTrain(){stopAllAudio();try{if(timer)clearInterval(timer)}catch(e){}page.value='home'}
+
+    // ===== 错题集 =====
+    const errorStats=reactive({totalQ:0,totalErr:0,accuracy:0,weakType:'',byType:[]})
+    const topErrors=ref([])
+    function refreshErrorBook(){
+      const errors=JSON.parse(localStorage.getItem('fastcal_errors')||'[]')
+      const allSubs=submissions.value
+      let totalQ=0,totalErr=0
+      const typeMap={addition:{label:'加法',total:0,err:0},subtraction:{label:'减法',total:0,err:0},multiply:{label:'乘法',total:0,err:0},divide:{label:'除法',total:0,err:0},addSub:{label:'加减',total:0,err:0}}
+      for(const sub of allSubs){for(const a of(sub.answers||[])){totalQ++;const t=a.q?.operators?.includes('×')?'multiply':a.q?.operators?.includes('÷')?'divide':a.q?.operators?.includes('-')?'subtraction':'addition';if(typeMap[t])typeMap[t].total++;if(!a.ok){totalErr++;if(typeMap[t])typeMap[t].err++;errors.push({display:fmtQ(a.q),answer:a.ans,user:a.user,type:t,date:sub.date||''})}}}
+      for(const e of errors){totalQ++;const t=e.type||'addition';if(typeMap[t])typeMap[t].total++;if(typeMap[t])typeMap[t].err++}
+      const byType=Object.entries(typeMap).filter(([,v])=>v.total>0).map(([k,v])=>({type:k,label:v.label,total:v.total,err:v.err,errRate:v.total?Math.round(v.err/v.total*100):0})).sort((a,b)=>b.errRate-a.errRate)
+      errorStats.totalQ=totalQ;errorStats.totalErr=totalErr;errorStats.accuracy=totalQ?Math.round((totalQ-totalErr)/totalQ*100):0
+      errorStats.weakType=byType.length?byType[0].label:'';errorStats.byType=byType
+      const errMap={};for(const e of errors){const key=e.display||'';if(!errMap[key])errMap[key]={key,display:key,type:e.type,count:0,total:0};errMap[key].count++;errMap[key].total++}
+      topErrors.value=Object.values(errMap).sort((a,b)=>b.count-a.count).slice(0,10)
+    }
+    function retryErrors(type){
+      trainType.value=type||'addition';trainCfg.opType='direct_add';trainCfg.mode='visual'
+      trainCfg.minDigit=1;trainCfg.maxDigit=2;trainCfg.decDigit=0;trainCfg.mulMaxDigit=1;trainCfg.mulDecDigit=0;trainCfg.allowedDigits=[];trainCfg.ansDecDigit=0;trainCfg.numCount=3
+      train.hwTitle='错题重练';startTrain()
+    }
+
+    // ===== 特殊训练（看数画珠/看珠译数/数码秒记） =====
+    const spCfg=reactive({type:'',difficulty:'beginner',count:15})
+    const specialLabel=computed(()=>({numToBead:'看数画珠',beadToNum:'看珠译数',flashMemory:'数码秒记'}[spCfg.type]||''))
+    const specialDiffs=computed(()=>{
+      if(spCfg.type==='flashMemory')return[
+        {value:'beginner',icon:'🌱',label:'入门级',desc:'2-3位数字，1秒闪现'},
+        {value:'intermediate',icon:'🌿',label:'进阶级',desc:'4-6位数字，0.8秒闪现'},
+        {value:'advanced',icon:'🌳',label:'定级级',desc:'7-12位数字，0.5秒闪现'}]
+      return[
+        {value:'beginner',icon:'🌱',label:'入门级',desc:'1-2位数，3秒展示'},
+        {value:'intermediate',icon:'🌿',label:'进阶级',desc:'3-5位数，2秒展示'},
+        {value:'advanced',icon:'🌳',label:'定级级',desc:'6-8位数，1.5秒展示'}]})
+    const sp=reactive({idx:0,ok:0,err:0,number:'',beads:[],phase:'',countdown:0,userInput:'',lastOk:false,streak:0,maxStreak:0})
+    let spTimer=null,spStartT=0
+    const spDiffCfg={beginner:{minD:1,maxD:2,showMs:3000},intermediate:{minD:3,maxD:5,showMs:2000},advanced:{minD:6,maxD:8,showMs:1500}}
+    const spFlashCfg={beginner:{minD:2,maxD:3,showMs:1000},intermediate:{minD:4,maxD:6,showMs:800},advanced:{minD:7,maxD:12,showMs:500}}
+    function startSpecial(type){spCfg.type=type;spCfg.difficulty='beginner';spCfg.count=15;page.value='specialCfg'}
+    function genRandNum(minD,maxD){const d=minD+Math.floor(Math.random()*(maxD-minD+1));let n='';for(let i=0;i<d;i++)n+=i===0?Math.floor(Math.random()*9)+1:Math.floor(Math.random()*10);return n}
+    function numToBeads(num){return num.split('').map(d=>{const v=+d;return v<5?{upper:0,lower:v}:{upper:1,lower:v-5}})}
+    function beadsToNum(beads){return String(parseInt(beads.map(c=>c.upper*5+c.lower).join(''))||0)}
+    function goSpecial(){sp.idx=0;sp.ok=0;sp.err=0;sp.streak=0;sp.maxStreak=0;spStartT=Date.now();page.value='spTrain';nextTick(()=>spNext())}
+    function spNext(){
+      if(sp.idx>=spCfg.count){spFinish();return}
+      sp.userInput='';sp.lastOk=false
+      const dc=spCfg.type==='flashMemory'?spFlashCfg[spCfg.difficulty]:spDiffCfg[spCfg.difficulty]
+      sp.number=genRandNum(dc.minD,dc.maxD);sp.beads=numToBeads(sp.number)
+      if(spCfg.type==='numToBead'){sp.phase='show';sp.countdown=Math.ceil(dc.showMs/1000);spCountdown(()=>{sp.phase='verify';sp.beads=sp.number.split('').map(()=>({upper:0,lower:0}))})}
+      else if(spCfg.type==='beadToNum'){sp.phase='show';sp.countdown=Math.ceil(dc.showMs/1000);spCountdown(()=>{sp.phase='input'})}
+      else{sp.phase='flash';spTimer=setTimeout(()=>{sp.phase='hide';spTimer=setTimeout(()=>{sp.phase='input'},500)},dc.showMs)}
+    }
+    function spCountdown(cb){if(spTimer)clearInterval(spTimer);spTimer=setInterval(()=>{sp.countdown--;if(sp.countdown<=0){clearInterval(spTimer);spTimer=null;cb()}},1000)}
+    let _spSlideCol=-1,_spSlideSec='',_spSliding=false
+    function spClickBead(i,sec){if(_spSliding){_spSliding=false;return}const c=sp.beads[i];if(sec==='upper'){c.upper=c.upper<2?c.upper+1:0}else{c.lower=c.lower<4?c.lower+1:0}}
+    function _spSlideUpdate(clientX,clientY){
+      const wrap=document.getElementById('spAbacus');if(!wrap)return
+      const cols=wrap.querySelectorAll('.bead-col')
+      for(let i=0;i<cols.length;i++){
+        const cr=cols[i].getBoundingClientRect()
+        if(clientX>=cr.left&&clientX<=cr.right){
+          const upperEl=cols[i].querySelector('.bead-upper'),lowerEl=cols[i].querySelector('.bead-lower')
+          const ur=upperEl.getBoundingClientRect(),lr=lowerEl.getBoundingClientRect()
+          if(clientY>=ur.top&&clientY<=ur.bottom){
+            _spSlideCol=i;_spSlideSec='upper'
+            const ratio=Math.max(0,Math.min(1,(clientY-ur.top)/ur.height))
+            sp.beads[i].upper=Math.min(2,Math.max(0,Math.round(ratio*2)))
+          }else if(clientY>=lr.top&&clientY<=lr.bottom){
+            _spSlideCol=i;_spSlideSec='lower'
+            const ratio=Math.max(0,Math.min(1,(clientY-lr.top)/lr.height))
+            sp.beads[i].lower=Math.min(4,Math.max(0,Math.round(ratio*4)))
+          }
+          break
+        }
+      }
+    }
+    function _spSlideEnd(){if(_spSlideCol>=0)_spSliding=true;_spSlideCol=-1;_spSlideSec='';setTimeout(()=>{_spSliding=false},350)}
+    function spResetBeads(){sp.beads=sp.number.split('').map(()=>({upper:0,lower:0}))}
+    let _spSubmitting=false
+    function spSubmitBeads(){if(_spSubmitting)return;_spSubmitting=true;const got=String(beadsToNum(sp.beads)),exp=String(sp.number);const ok=got===exp;console.log('[看数画珠] 提交:',got,'期望:',exp,'结果:',ok);spRecord(ok);_spSubmitting=false}
+    function spSubmitNum(){if(_spSubmitting)return;if(!sp.userInput)return;_spSubmitting=true;const got=String(sp.userInput).trim(),exp=String(sp.number);const ok=got===exp;console.log('[看珠译数] 提交:',got,'期望:',exp,'结果:',ok);spRecord(ok);_spSubmitting=false}
+    function spSubmitFlash(){if(_spSubmitting)return;if(!sp.userInput)return;_spSubmitting=true;const got=String(sp.userInput).trim(),exp=String(sp.number);const ok=got===exp;spRecord(ok);_spSubmitting=false}
+    function spRecord(ok){sp.lastOk=ok;if(ok){sp.ok++;sp.streak++;if(sp.streak>sp.maxStreak)sp.maxStreak=sp.streak}else{sp.err++;sp.streak=0}sp.phase='feedback';spTimer=setTimeout(()=>{sp.idx++;nextTick(()=>spNext())},1200)}
+    function spFinish(){
+      const total=sp.ok+sp.err,acc=total?Math.round(sp.ok/total*100):0,used=Math.round((Date.now()-spStartT)/1000)
+      train.ok=sp.ok;train.err=sp.err;train.total=total;train.accuracy=acc;train.usedTime=used;train.answers=[];train.hwTitle=specialLabel.value;page.value='result'
+    }
+    function exitSpecial(){try{if(spTimer){clearInterval(spTimer);spTimer=null}}catch(e){}page.value='home'}
+
+    // ===== 定级考试 =====
+    const DAN_NAMES=['初','二','三','四','五','六','七','八','九','十']
+    const EXAM_LEVELS={
+      basic:[
+        {level:10,name:'基础十级',description:'直加直减',timeLimit:10,subjects:{addsub:{totalDigits:4,maxDigitPerNum:1,questionCount:30,opTypes:[{type:'direct_add',ratio:50},{type:'direct_sub',ratio:50}]}},passCriteria:{type:'count',threshold:24}},
+        {level:9,name:'基础九级',description:'一位数加减',timeLimit:10,subjects:{addsub:{totalDigits:6,maxDigitPerNum:1,questionCount:30,opTypes:[{type:'direct_add',ratio:40},{type:'direct_sub',ratio:40},{type:'carry_add',ratio:10},{type:'borrow_sub',ratio:10}]}},passCriteria:{type:'count',threshold:24}},
+        {level:8,name:'基础八级',description:'两位数加减',timeLimit:10,subjects:{addsub:{totalDigits:8,maxDigitPerNum:2,questionCount:30,opTypes:[{type:'direct_add',ratio:30},{type:'direct_sub',ratio:30},{type:'carry_add',ratio:20},{type:'borrow_sub',ratio:20}]}},passCriteria:{type:'count',threshold:24}},
+        {level:7,name:'基础七级',description:'三位数加减',timeLimit:10,subjects:{addsub:{totalDigits:10,maxDigitPerNum:3,questionCount:30,opTypes:[{type:'direct_add',ratio:25},{type:'direct_sub',ratio:25},{type:'carry_add',ratio:25},{type:'borrow_sub',ratio:25}]}},passCriteria:{type:'count',threshold:24}},
+        {level:6,name:'基础六级',description:'加减+乘算入门',timeLimit:10,subjects:{addsub:{totalDigits:12,maxDigitPerNum:3,questionCount:30,opTypes:[{type:'direct_add',ratio:25},{type:'direct_sub',ratio:25},{type:'carry_add',ratio:25},{type:'borrow_sub',ratio:25}]},multiply:{multiplicand:{integerDigits:2,decimalDigits:0},multiplier:{integerDigits:1,decimalDigits:0},questionCount:20}},passCriteria:{type:'count',threshold:24}},
+        {level:5,name:'基础五级',description:'加减乘除综合',timeLimit:10,subjects:{addsub:{totalDigits:15,maxDigitPerNum:3,questionCount:30,opTypes:[{type:'direct_add',ratio:20},{type:'direct_sub',ratio:20},{type:'carry_add',ratio:30},{type:'borrow_sub',ratio:30}]},multiply:{multiplicand:{integerDigits:3,decimalDigits:0},multiplier:{integerDigits:1,decimalDigits:0},questionCount:20},divide:{dividend:{integerDigits:3,decimalDigits:0},divisor:{integerDigits:1,decimalDigits:0},answerDecimalDigits:0,questionCount:20}},passCriteria:{type:'count',threshold:16}},
+        {level:4,name:'基础四级',description:'多位数四则运算',timeLimit:10,subjects:{addsub:{totalDigits:20,maxDigitPerNum:4,questionCount:25,opTypes:[{type:'direct_add',ratio:20},{type:'direct_sub',ratio:20},{type:'carry_add',ratio:30},{type:'borrow_sub',ratio:30}]},multiply:{multiplicand:{integerDigits:3,decimalDigits:0},multiplier:{integerDigits:2,decimalDigits:0},questionCount:20},divide:{dividend:{integerDigits:4,decimalDigits:0},divisor:{integerDigits:2,decimalDigits:0},answerDecimalDigits:0,questionCount:20}},passCriteria:{type:'count',threshold:16}},
+        {level:3,name:'基础三级',description:'复杂四则运算',timeLimit:10,subjects:{addsub:{totalDigits:25,maxDigitPerNum:4,questionCount:20,opTypes:[{type:'direct_add',ratio:15},{type:'direct_sub',ratio:15},{type:'carry_add',ratio:35},{type:'borrow_sub',ratio:35}]},multiply:{multiplicand:{integerDigits:4,decimalDigits:0},multiplier:{integerDigits:2,decimalDigits:0},questionCount:20},divide:{dividend:{integerDigits:5,decimalDigits:0},divisor:{integerDigits:2,decimalDigits:0},answerDecimalDigits:0,questionCount:20}},passCriteria:{type:'count',threshold:16}},
+        {level:2,name:'基础二级',description:'高阶四则运算',timeLimit:10,subjects:{addsub:{totalDigits:28,maxDigitPerNum:5,questionCount:20,opTypes:[{type:'direct_add',ratio:10},{type:'direct_sub',ratio:10},{type:'carry_add',ratio:40},{type:'borrow_sub',ratio:40}]},multiply:{multiplicand:{integerDigits:4,decimalDigits:0},multiplier:{integerDigits:3,decimalDigits:0},questionCount:20},divide:{dividend:{integerDigits:5,decimalDigits:0},divisor:{integerDigits:3,decimalDigits:0},answerDecimalDigits:0,questionCount:20}},passCriteria:{type:'count',threshold:16}},
+        {level:1,name:'基础一级',description:'基础最高级',timeLimit:10,subjects:{addsub:{totalDigits:30,maxDigitPerNum:5,questionCount:20,opTypes:[{type:'direct_add',ratio:10},{type:'direct_sub',ratio:10},{type:'carry_add',ratio:40},{type:'borrow_sub',ratio:40}]},multiply:{multiplicand:{integerDigits:5,decimalDigits:0},multiplier:{integerDigits:3,decimalDigits:0},questionCount:20},divide:{dividend:{integerDigits:6,decimalDigits:0},divisor:{integerDigits:3,decimalDigits:0},answerDecimalDigits:0,questionCount:20}},passCriteria:{type:'count',threshold:16}}
+      ],
+      expert:[
+        {level:6,name:'能手六级',description:'能手入门',timeLimit:10,subjects:{addsub:{totalDigits:50,maxDigitPerNum:6,questionCount:20,opTypes:[{type:'carry_add',ratio:50},{type:'borrow_sub',ratio:50}]}},passCriteria:{type:'count',threshold:10}},
+        {level:5,name:'能手五级',description:'能手进阶',timeLimit:10,subjects:{addsub:{totalDigits:60,maxDigitPerNum:7,questionCount:20,opTypes:[{type:'carry_add',ratio:50},{type:'borrow_sub',ratio:50}]}},passCriteria:{type:'count',threshold:11}},
+        {level:4,name:'能手四级',description:'能手中级',timeLimit:10,subjects:{addsub:{totalDigits:70,maxDigitPerNum:8,questionCount:20,opTypes:[{type:'carry_add',ratio:50},{type:'borrow_sub',ratio:50}]}},passCriteria:{type:'count',threshold:12}},
+        {level:3,name:'能手三级',description:'能手高级',timeLimit:10,subjects:{addsub:{totalDigits:80,maxDigitPerNum:9,questionCount:20,opTypes:[{type:'carry_add',ratio:50},{type:'borrow_sub',ratio:50}]}},passCriteria:{type:'count',threshold:14}},
+        {level:2,name:'能手二级',description:'能手精英',timeLimit:10,subjects:{addsub:{totalDigits:90,maxDigitPerNum:9,questionCount:20,opTypes:[{type:'carry_add',ratio:50},{type:'borrow_sub',ratio:50}]}},passCriteria:{type:'count',threshold:16}},
+        {level:1,name:'能手一级',description:'能手最高级',timeLimit:10,subjects:{addsub:{totalDigits:120,maxDigitPerNum:10,questionCount:20,opTypes:[{type:'carry_add',ratio:50},{type:'borrow_sub',ratio:50}]}},passCriteria:{type:'count',threshold:18}}
+      ],
+      dan:[
+        {level:1,name:'初段',description:'段位入门',timeLimit:10,totalQuestions:20,passCount:10},
+        {level:2,name:'二段',description:'段位进阶',timeLimit:10,totalQuestions:20,passCount:11},
+        {level:3,name:'三段',description:'段位中级',timeLimit:10,totalQuestions:20,passCount:12},
+        {level:4,name:'四段',description:'段位高级',timeLimit:10,totalQuestions:20,passCount:13},
+        {level:5,name:'五段',description:'段位精英',timeLimit:10,totalQuestions:20,passCount:14},
+        {level:6,name:'六段',description:'段位大师',timeLimit:10,totalQuestions:20,passCount:15},
+        {level:7,name:'七段',description:'段位宗师',timeLimit:10,totalQuestions:20,passCount:16},
+        {level:8,name:'八段',description:'段位传奇',timeLimit:10,totalQuestions:20,passCount:17},
+        {level:9,name:'九段',description:'段位至尊',timeLimit:10,totalQuestions:20,passCount:18},
+        {level:10,name:'十段',description:'段位巅峰',timeLimit:10,totalQuestions:20,passCount:19}
+      ]
+    }
+    const examSystems=[
+      {key:'basic',name:'基础级',icon:'🌱',desc:'十级→一级'},
+      {key:'expert',name:'能手级',icon:'⭐',desc:'能手六级→能手一级'},
+      {key:'dan',name:'段位级',icon:'🏆',desc:'初段→十段'}
+    ]
+    const examSys=ref(null),examLv=ref(null)
+    const examQs=ref([]),examQTypes=ref([]),examIdx=ref(0),examAns=ref('')
+    const examOk=ref(0),examErr=ref(0),examRemain=ref(600),examPassThreshold=ref(0)
+    const examShowResult=ref(false),examIsPassed=ref(false),examHistory=ref([])
+    const certCanvas=ref(null)
+    let examTimerInt=null,examStartT=0
+    const examLevels=computed(()=>examSys.value?EXAM_LEVELS[examSys.value]||[]:[]);
+    const examLevelCfg=computed(()=>{if(!examSys.value||!examLv.value)return null;return EXAM_LEVELS[examSys.value]?.find(l=>l.level===examLv.value)||null})
+    const examLevelName=computed(()=>{const c=examLevelCfg.value;return c?c.name:''})
+    const examTimeLimit=computed(()=>examLevelCfg.value?.timeLimit||10)
+    const examQCount=computed(()=>{
+      const c=examLevelCfg.value;if(!c)return 20
+      if(c.totalQuestions)return c.totalQuestions
+      if(c.subjects){let t=0;if(c.subjects.addsub)t+=c.subjects.addsub.questionCount||20;if(c.subjects.multiply)t+=c.subjects.multiply.questionCount||10;if(c.subjects.divide)t+=c.subjects.divide.questionCount||10;return t||20}
+      return 20
+    })
+    const examPassCriteria=computed(()=>{
+      const c=examLevelCfg.value;if(!c)return''
+      if(c.passCriteria){const t=c.passCriteria;if(t.type==='count')return examQCount.value+'题中答对'+t.threshold+'题';return'正确率'+t.threshold+'%'}
+      if(c.passCount)return c.totalQuestions+'题中答对'+c.passCount+'题';return'正确率80%'
+    })
+    const examSubjects=computed(()=>{
+      const c=examLevelCfg.value;if(!c)return['加减算']
+      if(c.totalQuestions)return['综合算']
+      const s=[];if(c.subjects?.addsub)s.push('加减算');if(c.subjects?.multiply)s.push('乘算');if(c.subjects?.divide)s.push('除算');return s.length?s:['加减算']
+    })
+    const examAccuracy=computed(()=>{const t=examOk.value+examErr.value;return t?Math.round(examOk.value/t*100):0})
+    const examUsed=computed(()=>Math.round((Date.now()-examStartT)/1000))
+    const examCurType=computed(()=>examQTypes.value[examIdx.value]||'addsub')
+    const examCurText=computed(()=>{
+      const q=examQs.value[examIdx.value];if(!q)return'...'
+      const t=examCurType.value
+      if(t==='multiply')return q.operands[0]+' × '+q.operands[1]+' = ?'
+      if(t==='divide')return q.operands[0]+' ÷ '+q.operands[1]+' = ?'
+      return fmtQ(q)+' = ?'
+    })
+    function examSelectSys(s){examSys.value=s;examLv.value=null}
+    function examLevelPassed(lv){return examHistory.value.some(r=>r.system===examSys.value&&r.level===lv&&r.passed)}
+    function examIsLocked(lv){
+      if(examSys.value==='basic'&&lv===10)return false;if(examSys.value==='expert'&&lv===6)return false;if(examSys.value==='dan'&&lv===1)return false
+      if(examSys.value==='basic'||examSys.value==='expert')return!examLevelPassed(lv+1);return!examLevelPassed(lv-1)
+    }
+    function examSelectLv(lv){if(examIsLocked(lv.level))return;examLv.value=lv.level}
+    function examDispLevel(lv){if(examSys.value==='basic')return lv+'级';if(examSys.value==='expert')return'能手'+lv+'级';if(examSys.value==='dan')return(lv===1?'初':DAN_NAMES[lv-1])+'段';return''+lv}
+    function examPassInfo(lv){
+      const c=EXAM_LEVELS[examSys.value]?.find(l=>l.level===lv);if(!c)return''
+      if(c.passCriteria)return c.passCriteria.threshold+'题';if(c.passCount)return c.passCount+'题';return'80%'
+    }
+    function examFmtTime(s){const m=Math.floor(s/60),sec=s%60;return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')}
+    function examFmtDate(d){const dt=new Date(d);return(dt.getMonth()+1)+'月'+dt.getDate()+'日'}
+    function examGenQs(){
+      const cfg=examLevelCfg.value;if(!cfg)return;const qs=[],ts=[]
+      if(cfg.totalQuestions){
+        for(let i=0;i<cfg.totalQuestions;i++){const r=Math.random();qs.push(genQ(r<0.5?'addsub':r<0.75?'multiply':'divide',{minDigit:2,maxDigit:4+cfg.level,decDigit:0,numCount:r<0.5?3:2,opType:Math.random()>0.5?'carry_add':'borrow_sub'},new RNG(Date.now()+i)));ts.push(r<0.5?'addsub':r<0.75?'multiply':'divide')}
+      }else if(cfg.subjects){
+        if(cfg.subjects.addsub){const sc=cfg.subjects.addsub;for(let i=0;i<(sc.questionCount||20);i++){let opType='direct_add';if(sc.opTypes){const r=Math.random()*100;let cum=0;for(const ot of sc.opTypes){cum+=ot.ratio;if(r<cum){opType=ot.type;break}}}qs.push(genQ('addsub',{minDigit:Math.max(1,sc.maxDigitPerNum-1),maxDigit:sc.maxDigitPerNum,decDigit:0,numCount:Math.max(2,Math.floor((sc.totalDigits||4)/Math.max(1,sc.maxDigitPerNum))),opType},new RNG(Date.now()+i)));ts.push('addsub')}}
+        if(cfg.subjects.multiply){const mc=cfg.subjects.multiply;for(let i=0;i<(mc.questionCount||10);i++){qs.push(genQ('multiply',{minDigit:mc.multiplicand.integerDigits,maxDigit:mc.multiplicand.integerDigits,decDigit:mc.multiplicand.decimalDigits||0,mulMaxDigit:mc.multiplier.integerDigits,mulDecDigit:mc.multiplier.decimalDigits||0,numCount:2},new RNG(Date.now()+1000+i)));ts.push('multiply')}}
+        if(cfg.subjects.divide){const dc=cfg.subjects.divide;for(let i=0;i<(dc.questionCount||10);i++){const pool=dc.divisor.integerDigits===1&&dc.divisor.decimalDigits===0;qs.push(genQ('divide',{minDigit:dc.dividend.integerDigits,maxDigit:dc.dividend.integerDigits,decDigit:dc.dividend.decimalDigits||0,mulMaxDigit:dc.divisor.integerDigits,mulDecDigit:dc.divisor.decimalDigits||0,ansDecDigit:dc.answerDecimalDigits||0,numCount:2,allowed:pool?[2,3,4,5,6,7,8,9]:[]},new RNG(Date.now()+2000+i)));ts.push('divide')}}
+      }else{for(let i=0;i<20;i++){qs.push(genQ('addsub',{minDigit:1,maxDigit:3,decDigit:0,numCount:3,opType:'carry_add'},new RNG(Date.now()+i)));ts.push('addsub')}}
+      for(let i=qs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qs[i],qs[j]]=[qs[j],qs[i]];[ts[i],ts[j]]=[ts[j],ts[i]]}
+      examQs.value=qs;examQTypes.value=ts
+    }
+    function startExam(){
+      if(!examSys.value||!examLv.value)return;examGenQs();examIdx.value=0;examOk.value=0;examErr.value=0;examAns.value='';examShowResult.value=false;examIsPassed.value=false
+      const c=examLevelCfg.value;if(c?.passCriteria)examPassThreshold.value=c.passCriteria.threshold;else if(c?.passCount)examPassThreshold.value=c.passCount;else examPassThreshold.value=Math.ceil(examQs.value.length*0.8)
+      examRemain.value=(c?.timeLimit||10)*60;examStartT=Date.now();page.value='examAnswer'
+      if(examTimerInt)clearInterval(examTimerInt);examTimerInt=setInterval(()=>{if(examRemain.value>0)examRemain.value--;else finishExam()},1000)
+    }
+    function examSubmitAns(){
+      if(!examAns.value||!examQs.value[examIdx.value])return;const ua=parseFloat(examAns.value),q=examQs.value[examIdx.value]
+      if(Math.abs(ua-q.answer)<0.01)examOk.value++;else examErr.value++
+      if(examIdx.value>=examQs.value.length-1)finishExam();else{examIdx.value++;examAns.value=''}
+    }
+    function finishExam(){
+      if(examTimerInt){clearInterval(examTimerInt);examTimerInt=null}
+      examIsPassed.value=examOk.value>=examPassThreshold.value;examShowResult.value=true
+      const res={id:Date.now().toString(),system:examSys.value,level:examLv.value,levelName:examLevelName.value,accuracy:examAccuracy.value,passed:examIsPassed.value,correctCount:examOk.value,totalCount:examOk.value+examErr.value,timeUsed:examUsed.value,examDate:new Date().toISOString()}
+      examHistory.value.unshift(res);localStorage.setItem('examHistory',JSON.stringify(examHistory.value))
+    }
+    function examRetry(){examShowResult.value=false;startExam()}
+    function showCert(){page.value='examCert';nextTick(()=>drawCert())}
+    function drawCert(){
+      const c=certCanvas.value;if(!c)return;const ctx=c.getContext('2d'),W=750,H=1060
+      const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#FFF8E1');g.addColorStop(1,'#FFECB3');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)
+      ctx.strokeStyle='#D4A574';ctx.lineWidth=8;ctx.strokeRect(20,20,W-40,H-40);ctx.strokeStyle='#E8C9A0';ctx.lineWidth=2;ctx.strokeRect(35,35,W-70,H-70)
+      ctx.fillStyle='#8B4513';ctx.font='bold 48px sans-serif';ctx.textAlign='center';ctx.fillText('珠心算定级考试证书',W/2,120)
+      ctx.fillStyle='#FF6B35';ctx.font='24px sans-serif';ctx.fillText('中国珠算心算协会',W/2,170)
+      ctx.beginPath();ctx.moveTo(100,200);ctx.lineTo(W-100,200);ctx.strokeStyle='#D4A574';ctx.lineWidth=2;ctx.stroke()
+      ctx.fillStyle='#333';ctx.font='32px sans-serif';ctx.fillText(examLevelName.value+' 考试通过',W/2,280)
+      ctx.font='28px sans-serif';ctx.fillText('正确率: '+examAccuracy.value+'%',W/2,340);ctx.fillText('正确: '+examOk.value+' / '+examQs.value.length,W/2,390);ctx.fillText('用时: '+examFmtTime(examUsed.value),W/2,440)
+      ctx.fillStyle='#999';ctx.font='22px sans-serif';ctx.fillText('考试日期: '+new Date().toLocaleDateString(),W/2,520)
+      ctx.save();ctx.translate(W-130,H-150);ctx.rotate(-0.2);ctx.strokeStyle='#CC0000';ctx.lineWidth=3;ctx.strokeRect(-40,-25,80,50);ctx.fillStyle='#CC0000';ctx.font='bold 20px sans-serif';ctx.fillText('通过',0,8);ctx.restore()
+      ctx.fillStyle='#ccc';ctx.font='16px sans-serif';ctx.fillText('证书编号: '+Date.now().toString(36).toUpperCase(),W/2,H-60)
+    }
+    function downloadCert(){const c=certCanvas.value;if(!c)return;try{const a=document.createElement('a');a.download=examLevelName.value+'-证书.png';a.href=c.toDataURL('image/png');a.click()}catch(e){}}
+    function loadExamHistory(){try{const s=localStorage.getItem('examHistory');if(s){const h=JSON.parse(s);if(Array.isArray(h))examHistory.value=h}}catch(e){}}
+    function openExam(){examSys.value=null;examLv.value=null;loadExamHistory();page.value='examSelect'}
+    loadExamHistory()
+
+    // ===== 定时自动生成作业（按用户创建的计划）+ 7天清理 =====
+    // 触发时机：onMounted 立即一次 + setInterval 每分钟一次
+    // 生成条件：
+    //   1. 当前时间 ≥ 当日 07:00
+    //   2. 计划 enabled=true
+    //   3. 当日在 [startDate, endDate] 范围内
+    //   4. 当日未按此计划生成过（按 planId+planDate 去重）
+    function runScheduledHWGen(){
+      const now=new Date()
+      if(now.getHours()<7)return
+      const todayISO=now.toISOString().split('T')[0]
+      const todayLocale=now.toLocaleDateString()
+      let created=0
+      for(const plan of hwPlans.value){
+        if(!plan.enabled)continue
+        if(todayISO<plan.startDate||todayISO>plan.endDate)continue
+        if(homeworks.value.some(h=>h.planId===plan.id&&h.planDate===todayISO))continue
+        const modeLabel=plan.config.mode==='listening'?'听心算':'看心算'
+        const baseTitle=`${plan.typeLabel}${modeLabel} ${todayISO}`
+        let batch=1
+        for(const h of homeworks.value){
+          if(h.title&&h.title.startsWith(baseTitle)){
+            const m=h.title.match(/#(\d+)$/);batch=Math.max(batch,(m?parseInt(m[1]):1)+1)
+          }
+        }
+        homeworks.value.unshift({
+          id:'hw_auto_'+Date.now()+'_'+plan.id,
+          title:`${baseTitle} #${batch}`,
+          type:plan.type,typeLabel:plan.typeLabel,
+          config:{...plan.config},
+          createdAt:todayLocale,
+          isAuto:true,
+          planId:plan.id,
+          planDate:todayISO
+        })
+        created++
+      }
+      if(created>0){
+        localStorage.setItem('fastcal_hw',JSON.stringify(homeworks.value))
+        console.log(`[作业] 定时自动生成 ${created} 道作业`)
+      }
+    }
+    function cleanExpiredData(){
+      const now=new Date();const sevenDaysAgo=new Date(now.getTime()-7*86400000).toLocaleDateString()
+      const doneSet=new Set(submissions.value.map(s=>s.hwId))
+      const before=homeworks.value.length
+      homeworks.value=homeworks.value.filter(h=>{
+        if(doneSet.has(h.id)&&h.createdAt){try{const d=new Date(h.createdAt);if(d<new Date(sevenDaysAgo))return false}catch(e){}}return true
+      })
+      if(homeworks.value.length!==before)localStorage.setItem('fastcal_hw',JSON.stringify(homeworks.value))
+    }
+
+    // ===== 分享 =====
+    const showShareModal=ref(false),shareModalTitle=ref(''),shareText=ref(''),shareData=ref(''),copyTip=ref(false),qrContainer=ref(null)
+    function encodeResult(){
+      const d={n:'学生',t:trainType.value,ok:train.ok,err:train.err,total:train.total,time:train.usedTime,acc:train.accuracy,title:train.hwTitle||'自由训练',date:new Date().toLocaleDateString(),
+        answers:train.answers.map(a=>({ops:a.q.operands,oprs:a.q.operators,ans:a.ans,user:a.user,ok:a.ok}))}
+      return 'FR:'+btoa(unescape(encodeURIComponent(JSON.stringify(d))))
+    }
+    function shareResult(){
+      const data=encodeResult();shareModalTitle.value='分享成绩'
+      shareData.value=data;shareText.value=`<strong>${train.hwTitle||'自由训练'}</strong><br>${new Date().toLocaleDateString()}<br>正确率 <strong>${train.accuracy}%</strong> · ${train.ok}/${train.total} · 用时${train.usedTime}s`
+      showShareModal.value=true;copyTip.value=false;nextTick(()=>renderQR(buildShareURL(data)))
+    }
+    function buildShareURL(data){const base=location.href.split('#')[0];const fullURL=base+'#share='+encodeURIComponent(data);return fullURL.length>800?base+'#batch=1':fullURL}
+    function renderQR(text){
+      if(!qrContainer.value)return;qrContainer.value.innerHTML=''
+      const levels=[QRCode.CorrectLevel.H,QRCode.CorrectLevel.Q,QRCode.CorrectLevel.M,QRCode.CorrectLevel.L]
+      for(const level of levels){try{new QRCode(qrContainer.value,{text,width:256,height:256,colorDark:'#333',colorLight:'#fff',correctLevel:level});return}catch(e){}}
+      qrContainer.value.innerHTML='<div style="color:#999;font-size:13px;padding:20px">二维码生成失败</div>'
+    }
+    function copyShareText(){
+      const plain=shareText.value.replace(/<[^>]+>/g,'')+'\n\n'+shareData.value
+      if(navigator.clipboard){navigator.clipboard.writeText(plain).then(()=>{copyTip.value=true;setTimeout(()=>copyTip.value=false,2000)})}
+      else{const ta=document.createElement('textarea');ta.value=plain;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);copyTip.value=true;setTimeout(()=>copyTip.value=false,2000)}
+      const qrCanvas=qrContainer.value?.querySelector('canvas');let qrImg=qrCanvas||(qrContainer.value?.querySelector('img'))
+      if(qrImg){const W=400,pad=24,lineH=22,title=shareModalTitle.value||'一心闪算';const info=shareText.value.replace(/<br\s*\/?>/g,'\n').replace(/<[^>]+>/g,'').trim();const infoLines=info.split('\n').filter(l=>l.trim());const qrSize=220;const H=pad+32+16+qrSize+16+infoLines.length*lineH+20+16+pad;const c=document.createElement('canvas');const dpr=window.devicePixelRatio||1;c.width=W*dpr;c.height=H*dpr;const ctx=c.getContext('2d');ctx.scale(dpr,dpr);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);let y=pad;ctx.fillStyle='#FF6B35';ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.fillText(title,W/2,y+20);y+=32;ctx.fillStyle='#f8f8f8';ctx.fillRect(pad-8,y,W-pad*2+16,2);y+=16;try{ctx.drawImage(qrImg,(W-qrSize)/2,y,qrSize,qrSize)}catch(e){}y+=qrSize+16;ctx.fillStyle='#333';ctx.font='13px sans-serif';for(const line of infoLines){ctx.fillText(line,W/2,y+14);y+=lineH}try{c.toBlob(blob=>{if(blob){const a=document.createElement('a');a.download='一心闪算成绩.png';a.href=URL.createObjectURL(blob);a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}},'image/png')}catch(e){const a=document.createElement('a');a.download='成绩.png';a.href=c.toDataURL();a.click()}}
+    }
+
+    function toggleAllowed(num){const i=hw.allowedDigits.indexOf(num);i>=0?hw.allowedDigits.splice(i,1):(hw.allowedDigits.push(num),hw.allowedDigits.sort((a,b)=>a-b))}
+    function onHWTypeChange(){const t=hw.type;if(t==='addition')hw.opType='direct_add';if(t==='subtraction')hw.opType='direct_sub';if(t==='multiply'||t==='divide'){hw.mulMaxDigit=1;hw.mulDecDigit=0;hw.allowedDigits=[]}}
+    function onTrainTypeChange(){const t=hw.type;if(t==='addition')hw.opType='direct_add';if(t==='subtraction')hw.opType='direct_sub';hw.mulMaxDigit=1;hw.mulDecDigit=0;hw.allowedDigits=[];if(t==='multiply'||t==='divide'){hw.numCount=2;hw.minDigit=1;hw.maxDigit=2;hw.decDigit=0}else{hw.numCount=3;hw.minDigit=1;hw.maxDigit=2;hw.decDigit=0}}
+
+    onMounted(()=>{
+      if(window.speechSynthesis){speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{nativeTTSReady=true}}
+      cleanExpiredData();runScheduledHWGen()
+      // 每分钟检查一次，确保当日 07:00 后能及时触发生成
+      setInterval(runScheduledHWGen,60000)
+      // 看数画珠滑动拨珠事件
+      const ts=e=>{const t=e.touches[0];_spSlideUpdate(t.clientX,t.clientY);e.preventDefault()}
+      const tm=e=>{if(_spSlideCol<0)return;const t=e.touches[0];_spSlideUpdate(t.clientX,t.clientY);e.preventDefault()}
+      const te=()=>_spSlideEnd()
+      const ms=e=>{_spSlideUpdate(e.clientX,e.clientY);e.preventDefault()}
+      const mm=e=>{if(_spSlideCol<0)return;_spSlideUpdate(e.clientX,e.clientY);e.preventDefault()}
+      const mu=()=>_spSlideEnd()
+      nextTick(()=>{
+        const el=document.getElementById('spAbacus')
+        if(el){el.addEventListener('touchstart',ts,{passive:false});el.addEventListener('touchmove',tm,{passive:false});el.addEventListener('touchend',te);el.addEventListener('mousedown',ms);el.addEventListener('mousemove',mm);el.addEventListener('mouseup',mu);el.addEventListener('mouseleave',mu)}
+      })
+    })
+
+    return{page,hwTypes,speedOpts,hw,trainType,trainCfg,homeworks,submissions,train,
+      isAddSubType,currentTypeLabel,numCountMin,numCountMax,trainNumCountMin,trainNumCountMax,digitMax,digitOptions,
+      autoTitle,hwShowPending,hwShowDone,hwShowExpired,groupedHWs,pendingHWCount,getHWStatus,getHWStatusText,toggleDate,clearHomeworks,goTodayHW,
+      hwPlans,showPlans,toggleHWPlan,deleteHWPlan,
+      submitHW,deleteHW,doHomework,toggleAllowed,onHWTypeChange,onTrainTypeChange,
+      freeTrain,goTrain,startTrain,submitAns,exitTrain,fmtQ,
+      errorStats,topErrors,refreshErrorBook,retryErrors,
+      spCfg,specialLabel,specialDiffs,sp,beadsToNum,
+      startSpecial,goSpecial,spClickBead,spResetBeads,spSubmitBeads,spSubmitNum,spSubmitFlash,exitSpecial,
+      showShareModal,shareModalTitle,shareText,shareData,copyTip,qrContainer,shareResult,copyShareText,
+      examSystems,examSys,examLv,examLevels,examIdx,examQs,examAns,examOk,examErr,examRemain,examAccuracy,examUsed,
+      examShowResult,examIsPassed,examPassThreshold,examHistory,examLevelName,examTimeLimit,examQCount,examPassCriteria,
+      examSubjects,examCurType,examCurText,certCanvas,
+      examSelectSys,examSelectLv,examIsLocked,examLevelPassed,examDispLevel,examPassInfo,examFmtTime,examFmtDate,
+      openExam,startExam,examSubmitAns,examRetry,showCert,downloadCert,loadExamHistory}
+  }
+}).mount('#app')
+</script>
+</body>
+</html>
